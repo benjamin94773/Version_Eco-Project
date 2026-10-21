@@ -493,7 +493,10 @@ En el contexto de aseguramiento de calidad, existe una relación jerárquica y d
     \item \textbf{Interdependencia y Cobertura Intrínseca (Cadena de Valor):}\\
     El sistema no opera con módulos aislados, sino con una cadena de custodia del inventario:
     \begin{equation*}
-        \text{F1 (Materias Primas)} \xrightarrow{\text{Insumo para}} \text{F2 (Fórmulas)} \xrightarrow{\text{Receta para}} \text{F3 (Producción Central)} \xrightarrow{\text{Stock para}} \text{F4 (Traslado a Sedes)}
+    \begin{aligned}
+        \text{F1 (Materias Primas)} &\xrightarrow{\text{Insumos para}} \text{F2 (Fórmulas)} \\
+        &\xrightarrow{\text{Receta para}} \text{F3 (Producción Central)} \xrightarrow{\text{Stock para}} \text{F4 (Traslado a Sedes)}
+    \end{aligned}
     \end{equation*}
     Por tanto, \textbf{al probar una funcionalidad aguas abajo se evalúan intrínsecamente las funcionalidades previas}:
     \begin{enumerate}[noitemsep]
@@ -535,9 +538,10 @@ Para garantizar la repetibilidad y consistencia de los 31 casos de prueba, la ba
 \begin{table}[htbp]
 \centering
 \small
-\begin{tabular}{l c c c}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{p{5.5cm} c p{6.8cm} c}
 \toprule
-\textbf{Funcionalidad} & \textbf{Total Casos} & \textbf{Técnicas Asignadas} & \textbf{Casos con Defecto Conocido} \\
+\textbf{Funcionalidad} & \textbf{Total Casos} & \textbf{Técnicas Asignadas} & \textbf{Casos con Defecto} \\
 \midrule
 \textbf{F3: Registro de producción} & 12 & Arreglo Ortogonal $L_9(3^4)$ + Tabla de Decisión & 0 \\
 \textbf{F4: Traslado de productos a sedes} & 7 & Tabla de Decisión + Valores Límite & 0 \\
@@ -546,8 +550,9 @@ Para garantizar la repetibilidad y consistencia de los 31 casos de prueba, la ba
 \midrule
 \textbf{TOTAL} & \textbf{31} & & \textbf{1} \\
 \bottomrule
-\end{tabular}
-\caption{Consolidado del Alcance de Casos de Prueba Diseñados.}
+\end{tabular}%
+}
+\caption{Consolidado del Alcance de Casos de Prueba Diseñados.}\label{tab:resumen_alcance}
 \end{table}
 
 \subsection{Precondiciones y Pasos de Ejecución Comunes (Procedimiento Operativo)}
@@ -689,6 +694,7 @@ Se ejecutó el ciclo completo de los \textbf{31 casos de prueba} sobre el softwa
 \begin{table}[htbp]
 \centering
 \small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{l c c c c c r}
 \toprule
 \textbf{Feature / Módulo} & \textbf{Total} & \textbf{Aprobado} & \textbf{Fallido} & \textbf{Bloqueado} & \textbf{No Ejec.} & \textbf{\% Aprobado} \\
@@ -700,8 +706,9 @@ Se ejecutó el ciclo completo de los \textbf{31 casos de prueba} sobre el softwa
 \midrule
 \textbf{TOTAL GENERAL} & \textbf{31} & \textbf{30} & \textbf{1} & \textbf{0} & \textbf{0} & \textbf{96.77\%} \\
 \bottomrule
-\end{tabular}
-\caption{Consolidado de Resultados de Ejecución de Pruebas.}
+\end{tabular}%
+}
+\caption{Consolidado de Resultados de Ejecución de Pruebas.}\label{tab:resumen_ejecucion}
 \end{table}
 
 \begin{tcolorbox}[colback=accentgreen!10,colframe=accentgreen,title=\textbf{Dictamen de Certificación del Sistema}]
