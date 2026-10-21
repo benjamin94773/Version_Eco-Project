@@ -1,6 +1,69 @@
-Version-Eco - Inventario (Full Stack)
+# Version-Eco - Sistema de Gestión de Producción e Inventario
 
-Estructura del proyecto
+Sistema web para la gestión de producción centralizada, catálogo de materias primas, formulación de productos ecológicos y distribución a sedes para cosmética vegana.
+
+---
+
+## 🚀 Inicio Rápido y Ejecución Local
+
+Para iniciar automáticamente todo el entorno (servidor Backend en puerto 4000 y Frontend Vite en puerto 5173) en una sola instrucción:
+
+``cmd
+iniciar_local
+``
+*(O hacer doble clic sobre iniciar_local.bat en la raíz del proyecto).*
+
+* **Frontend Web:** http://localhost:5173
+* **Backend API:** http://localhost:4000/api
+
+---
+
+## 🧪 Ejecución y Preparación de Pruebas
+
+### 1. Establecer la Base de Datos para Pruebas Manuales
+Para probar manualmente cualquier caso de prueba en la interfaz web sin tener que alterar el stock a mano, ejecuta en PowerShell:
+
+``powershell
+.\scripts\preparar_caso.ps1 F#-CP-##
+``
+
+**Ejemplos prácticos:**
+* Preparar el escenario para **F3-CP-02** (Producción al límite con Q=25 y alertas rojas):
+  ``powershell
+  .\scripts\preparar_caso.ps1 F3-CP-02
+  ``
+* Preparar el escenario para **F4-CP-01** (Traslado de Q=5 a Sede A):
+  ``powershell
+  .\scripts\preparar_caso.ps1 F4-CP-01
+  ``
+* Preparar el escenario para **F3-CP-03** (Bloqueo por materias primas insuficientes):
+  ``powershell
+  .\scripts\preparar_caso.ps1 F3-CP-03
+  ``
+
+El script configura inmediatamente los saldos requeridos en la base de datos PostgreSQL e imprime en la consola los pasos exactos a seguir en la interfaz web.
+
+---
+
+### 2. Ejecutar la Suite Completa Automatizada (31 Casos)
+Para ejecutar la validación automática de todos los 31 casos de prueba de caja negra y obtener el reporte de calidad:
+
+``powershell
+.\scripts\ejecutar_31_casos.ps1
+``
+
+---
+
+### 3. Reiniciar la Base de Datos a Estado Limpio
+Para resetear por completo las tablas y volver a cargar los datos semilla (*seed*):
+
+``powershell
+.\scripts\setup_local_db.ps1
+``
+
+---
+
+## Estructura del proyecto
 
 - database: scripts SQL de PostgreSQL.
 - backend: API REST con Node.js + Express + PostgreSQL.
