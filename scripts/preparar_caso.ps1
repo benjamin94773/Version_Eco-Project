@@ -12,7 +12,11 @@ $psqlPath = "C:\Program Files\PostgreSQL\18\bin\psql.exe"
 if (-not (Test-Path $psqlPath)) {
     $found = Get-Command psql.exe -ErrorAction SilentlyContinue
     if ($found) { $psqlPath = $found.Source }
-    else { throw "No se encontro psql.exe en el sistema." }
+    else {
+        $anyPsql = Get-ChildItem -Path "C:\Program Files\PostgreSQL" -Filter "psql.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($anyPsql) { $psqlPath = $anyPsql.FullName }
+        else { throw "No se encontro psql.exe en el sistema." }
+    }
 }
 
 $id = $Caso.Trim().ToUpper()
