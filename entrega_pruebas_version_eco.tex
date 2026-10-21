@@ -506,52 +506,188 @@ En el contexto de aseguramiento de calidad, existe una relación jerárquica y d
     \end{enumerate}
 \end{itemize}
 
-\subsection{Prerrequisitos de la Base de Datos y Datos de Prueba (Baseline)}
-Para garantizar la repetibilidad y consistencia de los 31 casos de prueba, la base de datos local (\texttt{version\_eco\_db}) debe encontrarse en un estado inicial controlado (\textit{Baseline}), el cual se establece mediante los scripts \texttt{01\_schema\_version\_eco.sql} y \texttt{02\_seed\_demo.sql}:
+\subsection{Justificación de Técnicas de Caja Negra Seleccionadas y Glosario}
 
-\begin{tcolorbox}[colback=lightgray,colframe=primary,title=\textbf{Estado Inicial de la Base de Datos (Prerrequisitos de Ejecución)}]
-\small
-\begin{enumerate}[leftmargin=0.6cm]
-    \item \textbf{Sedes Registradas:}
-    \begin{itemize}[noitemsep]
-        \item Sede Central (administrada internamente por el sistema para producción).
-        \item Sede A (ej: \textit{Sede Principal - Norte}) y Sede B (ej: \textit{Sede Chapinero}), ambas con inventario inicial $= 0$.
-    \end{itemize}
-    \item \textbf{Catálogo de Materias Primas de Referencia:}
-    \begin{itemize}[noitemsep]
-        \item Insumo A: \textit{Gel de Aloe Vera} (Unidad: \texttt{kg}, Nivel mínimo: 1.0).
-        \item Insumo B: \textit{Aceite de Coco Orgánico} (Unidad: \texttt{L}, Nivel mínimo: 1.0).
-        \item Insumo C: \textit{Glicerina Vegetal} (Unidad: \texttt{kg}, Nivel mínimo: 1.0).
-        \item Insumo D (para pruebas de eliminación F1-CP-08): \textit{Sal Marina} ($5\,\text{kg}$, sin asociar a recetas).
-    \end{itemize}
-    \item \textbf{Catálogo de Productos y Fórmulas (BOM):}
-    \begin{itemize}[noitemsep]
-        \item Producto Patrón: \textit{Champú Vegano de Romero y Aloe (80g)}.
-        \item Composición de la Fórmula (por 1 unidad): Insumo A = $0.5\,\text{kg}$, Insumo B = $0.2\,\text{L}$, Insumo C = $0.1\,\text{kg}$.
-    \end{itemize}
-    \item \textbf{Inventario Central Inicial:} 0 unidades de Champú Vegano en bodega central.
-    \item \textbf{Ajuste Dinámico por Caso:} Antes de ejecutar cada corrida de F3, el stock disponible de A, B y C se ajusta a los valores exactos definidos en la columna \textit{Entradas} mediante el módulo de Materias Primas.
-\end{enumerate}
-\end{tcolorbox}
+\subsubsection{Glosario Formal de Técnicas y Nomenclatura}
+\begin{itemize}[noitemsep]
+    \item \textbf{AO (Arreglo Ortogonal / Orthogonal Array Testing):} Técnica de prueba combinatoria basada en las matrices de Taguchi que selecciona una muestra óptima de combinaciones factoriales, garantizando una cobertura balanceada por pares (\textit{Pairwise Testing / 2-way}) con el mínimo esfuerzo posible.
+    \item \textbf{TD (Tabla de Decisión / Decision Table Testing):} Técnica de caja negra ideal para modelar lógica condicional compleja y reglas de negocio con combinaciones booleanas de causas (condiciones) y efectos (acciones del sistema).
+    \item \textbf{VL (Análisis de Valores Límite / Boundary Value Analysis):} Técnica que evalúa los valores ubicados exactamente en las fronteras de las clases de equivalencia (límite inferior, límite superior, y sus vecinos inmediatos frontera $+ \epsilon$ y frontera $- \epsilon$), donde se concentran estadísticamente más del 70\% de los defectos de codificación.
+    \item \textbf{PE (Partición de Equivalencia / Equivalence Partitioning):} División del conjunto de datos de entrada en clases disjuntas donde el sistema debe exhibir el mismo comportamiento, permitiendo seleccionar un caso representativo por clase.
+    \item \textbf{R1, R2, R3, R4 (Reglas de Decisión de F3):} Identificadores de las cuatro columnas de reglas derivadas formalmente de la Tabla de Decisión de producción.
+\end{itemize}
 
-\subsection{Resumen de Casos Diseñados por Funcionalidad}
+\subsubsection{Criterios de Asignación y Justificación Metodológica}
+\begin{itemize}
+    \item \textbf{Funcionalidad F3 (Producción Central):} Se asigna \textbf{TD + AO}. F3 posee la regla más crítica del software (atomicidad transaccional RN-10: o se descuentan todos los insumos o ninguno). La TD define \textit{qué reglas lógicas de negocio gobiernan la producción}, mientras que el AO $L_9(3^4)$ determina \textit{con qué combinaciones cuantitativas multidimensionales de stock se ejecutan dichas reglas}.
+    \item \textbf{Funcionalidad F4 (Traslado a Sedes):} Se asigna \textbf{TD + VL}. El traslado evalúa el stock disponible en bodega central frente a la cantidad solicitada. Los Valores Límite prueban el límite exacto admisible ($Q=20$), el desbordamiento por una unidad ($Q=21$) y la frontera mínima ($Q=0$).
+    \item \textbf{Funcionalidades F1 y F2 (Gestión de Insumos y Fórmulas):} Se asigna \textbf{TD + VL} y \textbf{TD}. \textit{No se utilizó Arreglo Ortogonal en F1 y F2} debido a que el espacio de parámetros es reducido y la lógica del negocio está gobernada por restricciones determinísticas directas (unicidad RN-01, tope de 50 kg RN-04, e integridad referencial RN-06). La Tabla de Decisión ofrece 100\% de cobertura de estas reglas sin la sobrecarga de una matriz ortogonal.
+\end{itemize}
+
+\subsection{Desarrollo Formal de la Tabla de Decisión (F3: Producción en Sede Central)}
+Para modelar la lógica de negocio de manufactura, se definen las siguientes condiciones operativas y acciones del sistema:
+
 \begin{table}[htbp]
 \centering
 \small
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{p{5.5cm} c p{6.8cm} c}
+\begin{tabularx}{\textwidth}{p{1.2cm} X p{1.2cm} X}
 \toprule
-\textbf{Funcionalidad} & \textbf{Total Casos} & \textbf{Técnicas Asignadas} & \textbf{Casos con Defecto} \\
+\textbf{ID} & \textbf{Condición de Entrada} & \textbf{ID} & \textbf{Acción del Sistema} \\
 \midrule
-\textbf{F3: Registro de producción} & 12 & Arreglo Ortogonal $L_9(3^4)$ + Tabla de Decisión & 0 \\
-\textbf{F4: Traslado de productos a sedes} & 7 & Tabla de Decisión + Valores Límite & 0 \\
-\textbf{F1: Gestión de materia prima} & 8 & Tabla de Decisión + Valores Límite & 1 (F1-CP-03) \\
+\textbf{C1} & La cantidad a producir $Q$ es un entero $>0$ (RN-12, RN-15). & \textbf{A1} & Registrar la orden de producción. \\
+\textbf{C2} & Todas las materias primas cubren la fórmula (RN-09, RN-10). & \textbf{A2} & Descontar stock de materias primas. \\
+\textbf{C3} & Alguna materia prima queda $\le \text{nivel mínimo}$ (RN-02). & \textbf{A3} & Sumar producto al inventario central. \\
+& & \textbf{A4} & Rechazar con error y mantener stock intacto. \\
+& & \textbf{A5} & Disparar alerta visual de stock bajo/agotado. \\
+\bottomrule
+\end{tabularx}
+\caption{Condiciones y Acciones Definidas para el Módulo F3.}\label{tab:td_condiciones}
+\end{table}
+
+A partir de estas condiciones, se construye la \textbf{Matriz de Decisión Formal} consolidada en cuatro reglas fundamentales:
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{l X c c c c}
+\toprule
+\textbf{Tipo} & \textbf{Enunciado / Variable} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} \\
+\midrule
+\textbf{Condiciones} & \textbf{C1:} Cantidad $Q$ es entero $>0$ & \textbf{No} & \textbf{Sí} & \textbf{Sí} & \textbf{Sí} \\
+& \textbf{C2:} Stock suficiente en todas las materias primas & -- & \textbf{No} & \textbf{Sí} & \textbf{Sí} \\
+& \textbf{C3:} Stock remanente queda $\le \text{nivel mínimo (1.0)}$ & -- & -- & \textbf{No} & \textbf{Sí} \\
+\midrule
+\textbf{Acciones} & \textbf{A1:} Registrar orden de producción & & & \textbf{X} & \textbf{X} \\
+& \textbf{A2:} Descontar proporcionalmente materias primas & & & \textbf{X} & \textbf{X} \\
+& \textbf{A3:} Incrementar inventario central de producto & & & \textbf{X} & \textbf{X} \\
+& \textbf{A4:} Rechazar transacción con rollback total (sin cambios) & \textbf{X} & \textbf{X} & & \\
+& \textbf{A5:} Generar alerta de inventario bajo o en cero & & & & \textbf{X} \\
+\bottomrule
+\end{tabularx}
+\caption{Tabla de Decisión Formal del Proceso de Producción.}\label{tab:td_produccion}
+\end{table}
+
+\textbf{Desglose de las Reglas Resultantes:}
+\begin{itemize}[noitemsep]
+    \item \textbf{Regla R1 (Entrada Inválida):} La cantidad ingresada no cumple con ser un entero positivo. El sistema bloquea la transacción antes de consultar inventarios.
+    \item \textbf{Particiones Disjuntas de C1 (RN-15):} Debido a que los mecanismos de validación frontal y backend difieren según el tipo de dato, la condición C1 agrupa tres clases de equivalencia inválidas disjuntas: cantidad cero ($Q=0$), cantidad negativa ($Q=-5$) y cantidad fraccionaria ($Q=2.5$). Por rigor metodológico, \textbf{la regla R1 se prueba con un caso independiente por cada partición} (casos F3-CP-10, F3-CP-11 y F3-CP-12).
+    \item \textbf{Regla R2 (Insumo Insuficiente - Atomicidad RN-10):} Cantidad válida pero al menos un insumo no alcanza. Se rechaza la producción y se comprueba que \textbf{ningún insumo sufra deducción parcial} (Rollback).
+    \item \textbf{Regla R3 (Producción Normal con Holgura):} Todos los insumos alcanzan y sus saldos finales superan el nivel mínimo ($>1.0$). Se registra la manufactura sin alertas.
+    \item \textbf{Regla R4 (Producción en el Límite con Disparo de Alerta):} Los insumos alcanzan pero uno o más quedan en cero o por debajo de 1.0. Se registra la manufactura y se verifica la activación reactiva de las tarjetas de alerta roja en el Dashboard.
+\end{itemize}
+
+\subsection{Desarrollo y Demostración Matemática del Arreglo Ortogonal Taguchi $L_9(3^4)$}
+
+\subsubsection{Definición de Factores y Niveles de Prueba}
+Para evaluar exhaustivamente la interacción entre los consumos de la fórmula y las existencias en bodega bajo las reglas R2, R3 y R4, se seleccionan \textbf{4 factores} operativos, cada uno con \textbf{3 niveles} cuantitativos:
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{3.2cm} X X X}
+\toprule
+\textbf{Factor Operativo} & \textbf{Nivel 1: Suficiente (S)} & \textbf{Nivel 2: Exacto/Límite (E)} & \textbf{Nivel 3: Insuficiente (I)} \\
+\midrule
+\textbf{A: Stock Insumo A (Aloe)} & $\text{Requerido} + 5.0\,\text{kg}$ & $\text{Requerido exacto}$ & $\text{Requerido} - 0.05\,\text{kg}$ \\
+\textbf{Q: Cantidad Producida} & $10\,\text{unidades}$ & $25\,\text{unidades}$ & $1\,\text{unidad}$ \\
+\textbf{B: Stock Insumo B (Coco)} & $\text{Requerido} + 5.0\,\text{L}$ & $\text{Requerido exacto}$ & $\text{Requerido} - 0.05\,\text{L}$ \\
+\textbf{C: Stock Insumo C (Romero)} & $\text{Requerido} + 5.0\,\text{kg}$ & $\text{Requerido exacto}$ & $\text{Requerido} - 0.05\,\text{kg}$ \\
+\bottomrule
+\end{tabularx}
+\caption{Factores y Niveles Cuantitativos para el Arreglo Ortogonal.}\label{tab:factores_ao}
+\end{table}
+
+\textbf{Justificación de los Niveles de Frontera:} El nivel \textit{Exacto (E)} representa el límite superior admisible de consumo, mientras que el nivel \textit{Insuficiente (I)} sitúa el stock a solo $0.05$ unidades de la frontera de fallo, evaluando la precisión del cálculo relacional en ambos costados del umbral.
+
+\subsubsection{Demostración de Validez y Reducción Combinatoria Pairwise}
+Si se ejecutara una prueba combinatoria exhaustiva considerando los 4 factores con 3 niveles cada uno, el número total de escenarios requeridos sería:
+\begin{equation*}
+    N_{\text{exhaustivo}} = 3^4 = 81 \text{ combinaciones posibles}.
+\end{equation*}
+Al seleccionar el \textbf{Arreglo Ortogonal estándar de Taguchi $L_9(3^4)$}, el espacio de prueba se reduce de 81 a exactamente \textbf{9 corridas ortogonales}.
+
+\begin{tcolorbox}[colback=accentgreen!10,colframe=accentgreen,title=\textbf{Demostración de Validez Matemática de la Muestra $L_9(3^4)$}]
+\small
+La validez estadística de la matriz $L_9$ se fundamenta en la propiedad matemática de \textbf{Ortogonalidad Combinatoria}:
+\begin{enumerate}[noitemsep]
+    \item Para cualquier par de columnas de factores ($C_i, C_j$ con $i \ne j$), existen exactamente $3 \times 3 = 9$ pares de niveles posibles: $(1,1), (1,2), (1,3), (2,1), \dots, (3,3)$.
+    \item En la matriz $L_9(3^4)$, \textbf{cada uno de estos 9 pares aparece exactamente una vez} en la tabla.
+    \item Por consiguiente, el arreglo garantiza una \textbf{cobertura por pares completa (100\% Pairwise Coverage)}, lo cual, según los estudios empíricos de NIST (National Institute of Standards and Technology), detecta entre el \textbf{87\% y el 95\% de todas las fallas de software provocadas por interacciones de parámetros}.
+\end{enumerate}
+\end{tcolorbox}
+
+\subsubsection{Matriz Formal del Arreglo Ortogonal y Valores Concretos}
+A continuación se presenta la matriz canónica de las 9 corridas de Taguchi acoplada con las reglas de la Tabla de Decisión y traducida a los saldos iniciales exactos de bodega:
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{c c c c c c c c c c}
+\toprule
+\textbf{Corrida} & \textbf{ID Caso} & \textbf{A} & \textbf{Q} & \textbf{B} & \textbf{C} & \textbf{Regla TD} & \textbf{Stock A} & \textbf{Stock B} & \textbf{Stock C} \\
+\midrule
+1 & \textbf{F3-CP-01} & S & 10 & S & S & \textbf{R3} & $10.0\,\text{kg}$ & $7.0\,\text{kg}$ & $6.0\,\text{kg}$ \\
+2 & \textbf{F3-CP-02} & S & 25 & E & E & \textbf{R4} & $17.5\,\text{kg}$ & $5.0\,\text{kg}$ & $2.5\,\text{kg}$ \\
+3 & \textbf{F3-CP-03} & S & 1 & I & I & \textbf{R2} & $5.5\,\text{kg}$ & $0.15\,\text{kg}$ & $0.05\,\text{kg}$ \\
+4 & \textbf{F3-CP-04} & E & 10 & E & I & \textbf{R2} & $5.0\,\text{kg}$ & $2.0\,\text{kg}$ & $0.95\,\text{kg}$ \\
+5 & \textbf{F3-CP-05} & E & 25 & I & S & \textbf{R2} & $12.5\,\text{kg}$ & $4.95\,\text{kg}$ & $7.5\,\text{kg}$ \\
+6 & \textbf{F3-CP-06} & E & 1 & S & E & \textbf{R4} & $0.5\,\text{kg}$ & $5.2\,\text{kg}$ & $0.1\,\text{kg}$ \\
+7 & \textbf{F3-CP-07} & I & 10 & I & E & \textbf{R2} & $4.95\,\text{kg}$ & $1.95\,\text{kg}$ & $1.0\,\text{kg}$ \\
+8 & \textbf{F3-CP-08} & I & 25 & S & I & \textbf{R2} & $12.45\,\text{kg}$ & $10.0\,\text{kg}$ & $2.45\,\text{kg}$ \\
+9 & \textbf{F3-CP-09} & I & 1 & E & S & \textbf{R2} & $0.45\,\text{kg}$ & $0.2\,\text{kg}$ & $5.1\,\text{kg}$ \\
+\bottomrule
+\end{tabularx}
+\caption{Matriz Canónica del Arreglo Ortogonal $L_9(3^4)$ con Reglas de TD y Stocks Concretos.}\label{tab:matriz_l9}
+\end{table}
+
+\textbf{Optimalidad del Conjunto de Pruebas:} La combinación de las 9 corridas ortogonales del $L_9$ junto con las 3 particiones disjuntas de la regla R1 suma un total de \textbf{12 casos de prueba}. Frente a los 84 escenarios de la prueba exhaustiva ($81 + 3$), se logra una \textbf{reducción del 85.7\% del costo de ejecución} con una garantía de cobertura del 100\% de las reglas críticas de negocio.
+
+\subsection{Desarrollo de Técnicas para F4, F1 y F2 (Tablas de Decisión y Valores Límite)}
+
+\subsubsection{Módulo F4 (Traslado de Productos a Sedes)}
+Se modela mediante \textbf{Tabla de Decisión y Análisis de Valores Límite}:
+\begin{itemize}[noitemsep]
+    \item \textbf{Condición Principal:} $\text{Cantidad solicitada } Q \le \text{Stock disponible en Sede Central (20 unidades)}$.
+    \item \textbf{Frontera Superior Exacta (F4-CP-02):} $Q = 20$ (deja a Central en 0 y traslada 20 a Sede A).
+    \item \textbf{Frontera Superior Excedida (F4-CP-03):} $Q = 21$ (límite $+ 1$). El sistema debe bloquear la transacción por saldo insuficiente (RN-03, RN-11).
+    \item \textbf{Frontera Inferior Inválida (F4-CP-06):} $Q = 0$ (rechazo preventivo).
+    \item \textbf{Acumulación en Destino (F4-CP-05):} Valida que los traslados sucesivos incrementen la bodega destino en lugar de sobreescribir el saldo.
+\end{itemize}
+
+\subsubsection{Módulo F1 (Gestión de Materia Prima)}
+Aplica \textbf{Tabla de Decisión y Análisis de Valores Límite}:
+\begin{itemize}[noitemsep]
+    \item \textbf{Límite de Capacidad Máxima (RN-04):} Almacenamiento máximo permitido $= 50\,\text{kg}$.
+    \item \textbf{Frontera Superior Exacta (F1-CP-04):} Registro con exactamente $50.0\,\text{kg}$ (Aceptado).
+    \item \textbf{Frontera Superior Excedida (F1-CP-05):} Registro con $50.01\,\text{kg}$ (límite $+ 0.01$). Bloqueado por exceder capacidad.
+    \item \textbf{Límite Inferior de Alerta (F1-CP-07):} Cantidad inicial $= 0\,\text{kg}$ (Aceptado y genera alerta roja inmediata RN-02).
+    \item \textbf{Unicidad de Nombres (RN-01):} Probado en F1-CP-02 (duplicado idéntico) y F1-CP-03 (duplicado con mayúsculas/espacios, donde se aísla el defecto DEF-01).
+    \item \textbf{Integridad Referencial (RN-06):} Probado en F1-CP-08 (bloqueo de borrado de insumo activo en receta).
+\end{itemize}
+
+\subsubsection{Módulo F2 (Creación de Fórmulas)}
+Aplica \textbf{Tabla de Decisión}:
+\begin{itemize}[noitemsep]
+    \item Modela las condiciones booleanas de estructura de receta: fórmula vacía (F2-CP-02, rechazo RN-08), duplicidad del mismo insumo en la misma receta (F2-CP-03, rechazo RN-14), dosificación en cero (F2-CP-04, rechazo) y creación exitosa (F2-CP-01).
+\end{itemize}
+
+\subsection{Consolidado del Alcance de Casos de Prueba Diseñados}
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{4.2cm} c X c}
+\toprule
+\textbf{Funcionalidad / Módulo} & \textbf{Total Casos} & \textbf{Técnicas Formadas Asignadas} & \textbf{Casos con Defecto} \\
+\midrule
+\textbf{F3: Registro de producción} & 12 & Arreglo Ortogonal Taguchi $L_9(3^4)$ + Tabla de Decisión & 0 \\
+\textbf{F4: Traslado de productos a sedes} & 7 & Tabla de Decisión + Análisis de Valores Límite & 0 \\
+\textbf{F1: Gestión de materia prima} & 8 & Tabla de Decisión + Análisis de Valores Límite & 1 (F1-CP-03) \\
 \textbf{F2: Creación de fórmulas} & 4 & Tabla de Decisión & 0 \\
 \midrule
-\textbf{TOTAL} & \textbf{31} & & \textbf{1} \\
+\textbf{TOTAL GENERAL} & \textbf{31} & & \textbf{1} \\
 \bottomrule
-\end{tabular}%
-}
+\end{tabularx}
 \caption{Consolidado del Alcance de Casos de Prueba Diseñados.}\label{tab:resumen_alcance}
 \end{table}
 
@@ -694,10 +830,9 @@ Se ejecutó el ciclo completo de los \textbf{31 casos de prueba} sobre el softwa
 \begin{table}[htbp]
 \centering
 \small
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{l c c c c c r}
+\begin{tabularx}{\textwidth}{X c c c c c r}
 \toprule
-\textbf{Feature / Módulo} & \textbf{Total} & \textbf{Aprobado} & \textbf{Fallido} & \textbf{Bloqueado} & \textbf{No Ejec.} & \textbf{\% Aprobado} \\
+\textbf{Feature / Módulo} & \textbf{Total} & \textbf{Aprobado} & \textbf{Fallido} & \textbf{Bloq.} & \textbf{No Ejec.} & \textbf{\% Aprob.} \\
 \midrule
 \textbf{F3: Registro de producción} & 12 & 12 & 0 & 0 & 0 & \textbf{100.0\%} \\
 \textbf{F4: Traslado de productos a sedes} & 7 & 7 & 0 & 0 & 0 & \textbf{100.0\%} \\
@@ -706,8 +841,7 @@ Se ejecutó el ciclo completo de los \textbf{31 casos de prueba} sobre el softwa
 \midrule
 \textbf{TOTAL GENERAL} & \textbf{31} & \textbf{30} & \textbf{1} & \textbf{0} & \textbf{0} & \textbf{96.77\%} \\
 \bottomrule
-\end{tabular}%
-}
+\end{tabularx}
 \caption{Consolidado de Resultados de Ejecución de Pruebas.}\label{tab:resumen_ejecucion}
 \end{table}
 

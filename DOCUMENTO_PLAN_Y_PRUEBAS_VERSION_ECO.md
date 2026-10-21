@@ -154,25 +154,67 @@ En aseguramiento de calidad, existe una relación jerárquica y de dependencia d
   2. Al ejecutar una orden de producción (**F3**), se verifica intrínsecamente la fórmula (**F2**), el descuento de insumos (**F1**), el inventario central y el disparo reactivo de alertas de stock en el Dashboard.
   3. Para despachar producto (**F4**), se depende forzosamente del producto terminado fabricado en **F3** y de las sedes creadas en el sistema.
 
-### 8.2. Prerrequisitos de la Base de Datos y Datos de Prueba (Baseline)
-Para asegurar la repetibilidad de los 31 casos de prueba, la base de datos debe encontrarse en un estado inicial controlado (*Baseline*), el cual se carga automáticamente con `01_schema_version_eco.sql` y `02_seed_demo.sql`:
-1. **Sedes Registradas:** Sede Central (automática) + Sede A (Principal Norte) y Sede B (Chapinero), ambas con inventario inicial $= 0$.
-2. **Materias Primas de Referencia:**
-   - Insumo A: *Gel de Aloe Vera* (Unidad: `kg`, Nivel mínimo: 1.0)
-   - Insumo B: *Aceite de Coco Orgánico* (Unidad: `L`, Nivel mínimo: 1.0)
-   - Insumo C: *Glicerina Vegetal* (Unidad: `kg`, Nivel mínimo: 1.0)
-   - Insumo D: *Sal Marina* ($5\,\text{kg}$, sin asociar a recetas, para probar eliminación F1-CP-08)
-3. **Catálogo de Productos y Fórmulas (BOM):**
-   - Producto Patrón: *Champú Vegano de Romero y Aloe (80g)*.
-   - Fórmula: Insumo A = $0.5\,\text{kg/ud}$, Insumo B = $0.2\,\text{L/ud}$, Insumo C = $0.1\,\text{kg/ud}$.
-4. **Inventario Inicial:** 0 unidades en Central previo a F3. Para F4, se ejecuta una producción previa de 20 unidades para disponer del stock a trasladar.
+### 8.2. Justificación de Técnicas de Caja Negra Seleccionadas y Glosario
 
-### 8.3. Resumen por Funcionalidad
-| Funcionalidad | Total Casos | Técnicas Asignadas | Defecto Conocido |
+#### Glosario Formal
+- **AO (Arreglo Ortogonal / Orthogonal Array):** Técnica combinatoria de Taguchi que selecciona una muestra óptima de combinaciones factoriales garantizando cobertura completa por pares (*Pairwise / 2-way*).
+- **TD (Tabla de Decisión / Decision Table):** Técnica para modelar lógica condicional compleja y reglas de negocio booleanas con combinaciones de causas y efectos.
+- **VL (Análisis de Valores Límite / Boundary Value Analysis):** Técnica que examina las fronteras extremas de las clases de equivalencia (nominal, frontera exacta, frontera $+ \epsilon$ y frontera $- \epsilon$).
+- **PE (Partición de Equivalencia / Equivalence Partitioning):** División del dominio de entrada en clases disjuntas donde el sistema debe comportarse de forma homogénea.
+- **R1, R2, R3, R4:** Reglas derivadas de la Tabla de Decisión de manufactura (F3).
+
+#### Criterios de Selección
+- **F3 (Producción):** Se asigna **TD + AO**. La TD define las reglas de negocio atómicas (RN-10) y el AO $L_9(3^4)$ define las combinaciones cuantitativas de stock de los 3 insumos y la cantidad a producir.
+- **F4 (Traslado a sedes):** Se asigna **TD + VL** para evaluar el límite exacto del stock central (20), el desbordamiento por una unidad (21) y el traslado acumulativo a sucursales.
+- **F1 y F2 (Insumos y Fórmulas):** Se asigna **TD + VL** y **TD**. *No se usó AO* porque el número de factores es pequeño y la lógica se gobierna por restricciones determinísticas directas (unicidad RN-01, tope de 50 kg RN-04, e integridad referencial RN-06).
+
+### 8.3. Desarrollo Formal de la Tabla de Decisión (F3: Producción)
+
+| Tipo | Condición / Acción | R1 | R2 | R3 | R4 |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **Condiciones** | **C1:** Cantidad $Q$ es entero $>0$ (RN-12, RN-15) | **No** | **Sí** | **Sí** | **Sí** |
+| | **C2:** Todas las materias primas cubren la fórmula (RN-09, RN-10) | -- | **No** | **Sí** | **Sí** |
+| | **C3:** Algún insumo queda $\le \text{nivel mínimo (1.0)}$ (RN-02) | -- | -- | **No** | **Sí** |
+| **Acciones** | **A1:** Registrar la orden de producción | | | **X** | **X** |
+| | **A2:** Descontar proporcionalmente materias primas | | | **X** | **X** |
+| | **A3:** Sumar producto terminado al inventario central | | | **X** | **X** |
+| | **A4:** Rechazar con error y mantener stock intacto (*Rollback*) | **X** | **X** | | |
+| | **A5:** Generar alerta visual de stock bajo o en cero | | | | **X** |
+
+- **Particiones Disjuntas de C1 (R1):** Probadas con un caso independiente cada una: cantidad cero ($Q=0$, CP-10), cantidad negativa ($Q=-5$, CP-11) y cantidad fraccionaria ($Q=2.5$, CP-12).
+
+### 8.4. Desarrollo y Demostración Matemática del Arreglo Ortogonal Taguchi $L_9(3^4)$
+
+#### Factores y Niveles Cuantitativos
+- **Factor Q (Cantidad):** 10 unidades (Nivel 1), 25 unidades (Nivel 2), 1 unidad (Nivel 3).
+- **Factor A (Aloe):** Suficiente ($S$: req $+5$), Exacto ($E$: req), Insuficiente ($I$: req $-0.05$).
+- **Factor B (Coco):** Suficiente ($S$), Exacto ($E$), Insuficiente ($I$).
+- **Factor C (Romero):** Suficiente ($S$), Exacto ($E$), Insuficiente ($I$).
+
+#### Demostración de Validez y Reducción
+- **Espacio Exhaustivo:** $3^4 = 81$ corridas.
+- **Reducción con $L_9(3^4)$:** Exactamente **9 corridas ortogonales**.
+- **Propiedad de Ortogonalidad:** Cada uno de los $3 \times 3 = 9$ pares de niveles entre cualquier par de columnas aparece **exactamente 1 vez**. Esto garantiza **100% de Cobertura por Pares (Pairwise Coverage)**, atrapando entre el 87% y 95% de los defectos multidimensionales.
+- **Optimalidad del Conjunto:** 9 casos de $L_9$ + 3 casos de $R_1$ = **12 casos** (reducción del 85.7% respecto a los 84 exhaustivos).
+
+| Corrida | ID Caso | Factores $(A, Q, B, C)$ | Regla TD | Stock A | Stock B | Stock C |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: |
+| 1 | **F3-CP-01** | S, 10, S, S | **R3** | 10.0 kg | 7.0 kg | 6.0 kg |
+| 2 | **F3-CP-02** | S, 25, E, E | **R4** | 17.5 kg | 5.0 kg | 2.5 kg |
+| 3 | **F3-CP-03** | S, 1, I, I | **R2** | 5.5 kg | 0.15 kg | 0.05 kg |
+| 4 | **F3-CP-04** | E, 10, E, I | **R2** | 5.0 kg | 2.0 kg | 0.95 kg |
+| 5 | **F3-CP-05** | E, 25, I, S | **R2** | 12.5 kg | 4.95 kg | 7.5 kg |
+| 6 | **F3-CP-06** | E, 1, S, E | **R4** | 0.5 kg | 5.2 kg | 0.1 kg |
+| 7 | **F3-CP-07** | I, 10, I, E | **R2** | 4.95 kg | 1.95 kg | 1.0 kg |
+| 8 | **F3-CP-08** | I, 25, S, I | **R2** | 12.45 kg | 10.0 kg | 2.45 kg |
+| 9 | **F3-CP-09** | I, 1, E, S | **R2** | 0.45 kg | 0.2 kg | 5.1 kg |
+
+### 8.5. Resumen por Funcionalidad (Consolidado de Alcance)
+| Funcionalidad | Total Casos | Técnicas Asignadas | Casos con Defecto |
 | :--- | :---: | :--- | :---: |
-| **F3: Registro de producción** | 12 | Arreglo Ortogonal $L_9(3^4)$ + Tabla de Decisión | 0 |
-| **F4: Traslado de productos a sedes** | 7 | Tabla de Decisión + Valores Límite | 0 |
-| **F1: Gestión de materia prima** | 8 | Tabla de Decisión + Valores Límite | 1 (F1-CP-03) |
+| **F3: Registro de producción** | 12 | Arreglo Ortogonal Taguchi $L_9(3^4)$ + Tabla de Decisión | 0 |
+| **F4: Traslado de productos a sedes** | 7 | Tabla de Decisión + Análisis de Valores Límite | 0 |
+| **F1: Gestión de materia prima** | 8 | Tabla de Decisión + Análisis de Valores Límite | 1 (F1-CP-03) |
 | **F2: Creación de fórmulas** | 4 | Tabla de Decisión | 0 |
 | **TOTAL** | **31** | | **1** |
 
