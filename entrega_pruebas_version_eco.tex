@@ -1,0 +1,794 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-nodecimaldot,es-noquoting]{babel}
+\usepackage[margin=2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{xurl}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{colortbl}
+\usepackage{longtable}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+
+% Paleta de colores formal
+\definecolor{primary}{RGB}{30, 64, 175}
+\definecolor{secondary}{RGB}{71, 85, 105}
+\definecolor{accentgreen}{RGB}{22, 101, 52}
+\definecolor{accentred}{RGB}{153, 27, 27}
+\definecolor{lightgray}{RGB}{241, 245, 249}
+\definecolor{tableheader}{RGB}{226, 232, 240}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=primary,
+    urlcolor=primary,
+    citecolor=primary
+}
+
+\emergencystretch 3em
+\hfuzz 2pt
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small \textcolor{secondary}{Version-Eco: Plan Maestro de Pruebas y Reporte de Ejecución}}
+\fancyhead[R]{\small \textcolor{secondary}{Javeriana Cali -- 2026}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}{\Large\bfseries\color{primary}}{\thesection.}{0.5em}{}[\titlerule]
+\titleformat{\subsection}{\large\bfseries\color{secondary}}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{secondary}}{\thesubsubsection.}{0.5em}{}
+
+\begin{document}
+
+% ==============================================================================
+% PORTADA
+% ==============================================================================
+\begin{titlepage}
+    \centering
+    \vspace*{0.5cm}
+    
+    {\Huge \textbf{Pontificia Universidad Javeriana Cali}}\\[0.3cm]
+    {\LARGE Facultad de Ingeniería y Ciencias}\\[0.2cm]
+    {\Large Departamento de Ingeniería de Sistemas y Computación}\\[1.5cm]
+    
+    {\huge \bfseries \color{primary} Plan Maestro de Pruebas, Diseño de Casos (Caja Negra) y Reporte de Ejecución}\\[0.5cm]
+    {\LARGE \textbf{Sistema de Gestión de Inventario y Producción}}\\[0.2cm]
+    {\Large \textbf{Empresa Version-Eco}}\\[1.8cm]
+    
+    \textbf{Asignatura:}\\
+    Construcción de Software y Pruebas\\[1.2cm]
+    
+    \textbf{Integrantes del Equipo:}\\
+    Harold Guerrero\\
+    Benjamin Ortiz\\
+    Samuel Rueda\\
+    Daniela Orobio\\[1.5cm]
+    
+    \vfill
+    {\large Santiago de Cali, Colombia\\ 21 de octubre de 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ==============================================================================
+% 1. INFORMACIÓN GENERAL DEL PROYECTO
+% ==============================================================================
+\section{Información General del Proyecto}
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item \textbf{Nombre del Software:} Sistema de Gestión de Inventario y Producción para Version-Eco.
+    \item \textbf{Tipo de Sistema:} Aplicación Web Transaccional de Gestión de Cadena de Suministro (SMR/ERP ligero para formulación, producción centralizada y control multisede).
+    \item \textbf{Integrantes del Equipo:}
+    \begin{itemize}
+        \item Harold Guerrero
+        \item Benjamin Ortiz
+        \item Samuel Rueda
+        \item Daniela Orobio
+    \end{itemize}
+    \item \textbf{URL del Repositorio de Código:} \url{https://github.com/Benjamin-Ortiz/Version_EcoProject}
+    \item \textbf{URL de la Aplicación:}
+    \begin{itemize}
+        \item \textbf{Ambiente Local de Pruebas (SUT):} Frontend en \url{http://localhost:5173} y Backend API en \url{http://localhost:4000/api}.
+        \item \textbf{Ambiente de Despliegue en la Nube:} Despliegue en plataforma Vercel con integración a base de datos PostgreSQL Serverless (Neon).
+    \end{itemize}
+\end{itemize}
+
+% ==============================================================================
+% 2. DESCRIPCIÓN DEL SISTEMA
+% ==============================================================================
+\section{Descripción del Sistema}
+
+\subsection{¿Qué problema resuelve el software?}
+La fundación y empresa \textbf{Version-Eco} elabora productos cosméticos y de cuidado personal con enfoque vegano y ecológico (tales como champús sólidos, desodorantes naturales en crema y protectores solares minerales biodegradables). Históricamente, la empresa controlaba sus existencias mediante archivos dispersos de Microsoft Excel, lo cual generaba:
+\begin{enumerate}
+    \item Desconexión entre los insumos adquiridos y el gasto real de ingredientes en las órdenes de producción.
+    \item Quiebres imprevistos de materias primas críticas que paralizaban la planta de elaboración.
+    \item Carencia de visibilidad consolidada sobre el stock existente en cada una de sus sedes comerciales periféricas.
+    \item Discrepancias en el arqueo diario al registrar ventas o mermas manualmente sin una bitácora auditada.
+\end{enumerate}
+El sistema resuelve esta problemática centralizando todo el ciclo operativo: adquisición de materias primas, configuración de recetas industriales (BOM), producción con descuento atómico, traslado a sucursales y generación de alertas tempranas de desabastecimiento.
+
+\subsection{¿Quiénes son los usuarios del sistema?}
+\begin{itemize}
+    \item \textbf{Jefe de Producción / Maestro Formulador:} Administra las fórmulas oficiales, define las cantidades requeridas por lote y autoriza las órdenes de manufactura en la sede central.
+    \item \textbf{Encargado de Bodega y Compras:} Registra el ingreso de materias primas, valida los niveles de seguridad y gestiona los despachos a puntos de venta.
+    \item \textbf{Administradores de Sede:} Consultan el inventario físico disponible en su sucursal y reportan ajustes diarios de inventario derivados de ventas locales.
+\end{itemize}
+
+\subsection{¿Qué valor ofrece la aplicación?}
+\begin{itemize}
+    \item \textbf{Integridad y Atomicidad Operativa:} Garantiza matemáticamente que no se fabrique ningún lote si falta una sola fracción de materia prima, evitando deducciones parciales erróneas.
+    \item \textbf{Trazabilidad Completa:} Cada transformación física de insumo a producto terminado genera movimientos inmutables con fecha, sede y referencia.
+    \item \textbf{Toma de Decisiones Proactiva:} Semáforos de stock bajo que advierten oportunamente cuándo reabastecer insumos o trasladar productos.
+\end{itemize}
+
+% ==============================================================================
+% 3. ARQUITECTURA GENERAL
+% ==============================================================================
+\section{Arquitectura General del Sistema}
+
+\subsection{Tecnologías Utilizadas}
+\begin{itemize}
+    \item \textbf{Frontend (Capa de Cliente):} Desarrollado como una Single Page Application (SPA) con \textbf{React 18} y el empaquetador \textbf{Vite}. Maneja el enrutamiento con \textbf{React Router DOM v6}, peticiones HTTP asíncronas con \textbf{Axios} e iconografía mediante \textbf{Lucide React}.
+    \item \textbf{Backend (Capa de Negocio y API):} Desarrollado en \textbf{Node.js (v20+)} utilizando \textbf{Express 4} con soporte nativo de módulos ECMAScript (ESM). Emplea \textbf{Morgan} para registro de peticiones, \textbf{CORS} y \textbf{PDFKit} para generación en tiempo real de fichas técnicas descargables en PDF.
+    \item \textbf{Base de Datos (Capa de Persistencia):} Motor relacional \textbf{PostgreSQL 18}. Utiliza un pool de conexiones optimizado (\texttt{pg.Pool}), vistas calculadas (\texttt{vw\_alertas\_*}, \texttt{vw\_inventario\_central}), disparadores de auditoría y procedimientos almacenados en \textbf{PL/pgSQL} para ejecutar la lógica transaccional crítica.
+\end{itemize}
+
+\subsection{Componentes Principales del Sistema}
+\begin{enumerate}
+    \item \textbf{Interfaz Web SPA:} Compuesta por módulos reactivos: Dashboard de Métricas, Catálogo de Materias Primas, Catálogo de Productos y Fórmulas, Gestión de Sedes, Módulo de Producción Central, Módulo de Distribución y Vista de Movimientos.
+    \item \textbf{API RESTful:} Enrutador centralizado que expone endpoints bajo el prefijo \texttt{/api/}, gestiona códigos de estado HTTP (200, 201, 400, 404, 409, 500) y normaliza excepciones de base de datos.
+    \item \textbf{Motor de Reglas de Base de Datos (PL/pgSQL):} Encapsula la lógica transaccional de producción (\texttt{fn\_registrar\_produccion}) y distribución (\texttt{fn\_distribuir\_desde\_central}).
+\end{enumerate}
+
+\newpage
+\subsection{Diagrama de Arquitectura}
+
+\begin{center}
+\begin{tikzpicture}[
+    layerbox/.style={
+        rectangle, rounded corners=6pt, line width=1.2pt,
+        text width=13.5cm, align=center, inner sep=6pt
+    },
+    conn/.style={
+        {Latex[length=3mm,width=2.2mm]}-{Latex[length=3mm,width=2.2mm]},
+        line width=1.4pt
+    },
+    labelnode/.style={
+        fill=white, draw=gray!40, rounded corners=3pt, font=\scriptsize\bfseries,
+        inner sep=3pt, text=secondary
+    }
+]
+
+% Nodo Capa 1: Frontend
+\node[layerbox, draw=primary, fill=blue!4] (frontend) {
+    {\large \textbf{\color{primary} Capa 1: Presentación y Cliente Web (Frontend SPA)}}\\[1mm]
+    \textbf{React 18} \quad $\bullet$ \quad \textbf{Vite} \quad $\bullet$ \quad \textbf{React Router DOM v6} \quad $\vert$ \quad \texttt{http://localhost:5173}\\[1.5mm]
+    \footnotesize
+    \textbf{Módulos de Usuario:} Dashboard, Materias Primas, Productos, Fórmulas, Producción, Traslados\\
+    \textbf{Servicios UI:} Cliente HTTP Axios, Manejo de Estado Local, Validación de Entradas, Lucide Icons
+};
+
+% Nodo Capa 2: Backend
+\node[layerbox, draw=secondary, fill=gray!6, below=1.2cm of frontend] (backend) {
+    {\large \textbf{\color{secondary} Capa 2: Lógica de Negocio y Servicios (Backend REST API)}}\\[1mm]
+    \textbf{Node.js 20} \quad $\bullet$ \quad \textbf{Express 4 (ESM)} \quad $\bullet$ \quad \textbf{PDFKit} \quad $\vert$ \quad \texttt{http://localhost:4000/api}\\[1.5mm]
+    \footnotesize
+    \textbf{Enrutador de Endpoints:} \texttt{/api/produccion}, \texttt{/api/inventario}, \texttt{/api/sedes}, \texttt{/api/materias-primas}\\
+    \textbf{Servicios:} Middlewares (CORS, Morgan, ErrorHandler), Generador PDF de Recetas, Pool TCP \texttt{pg}
+};
+
+% Nodo Capa 3: Base de Datos
+\node[layerbox, draw=accentgreen, fill=green!4, below=1.2cm of backend] (database) {
+    {\large \textbf{\color{accentgreen} Capa 3: Persistencia y Reglas de Negocio (Base de Datos Relacional)}}\\[1mm]
+    \textbf{PostgreSQL 18} \quad $\vert$ \quad \texttt{127.0.0.1:5432 / version\_eco\_db}\\[1.5mm]
+    \footnotesize
+    \textbf{Tablas \& Triggers:} \texttt{materia\_prima}, \texttt{producto}, \texttt{inventario\_central}, \texttt{inventario\_sede}, \texttt{trg\_historial}\\
+    \textbf{Lógica Transaccional PL/pgSQL:} \texttt{fn\_registrar\_produccion}, \texttt{fn\_distribuir\_desde\_central}, Vistas de Alerta
+};
+
+% Flechas con etiquetas descriptivas
+\draw[conn, draw=primary] (frontend) -- (backend) 
+    node[midway, labelnode] {PETICIONES HTTP REST / RESPUESTAS ASÍNCRONAS JSON};
+
+\draw[conn, draw=secondary!90!black] (backend) -- (database) 
+    node[midway, labelnode] {CONEXIÓN TCP (DRIVER pg) / SENTENCIAS SQL \& TRANSACCIONES ACID};
+
+\end{tikzpicture}\\[2mm]
+{\small \textbf{Figura 1:} Diagrama de Arquitectura en Tres Capas (C4 - Nivel de Contenedores) para Version-Eco.}
+\end{center}
+
+% ==============================================================================
+% 4. ACTORES O TIPOS DE USUARIO
+% ==============================================================================
+\section{Actores o Tipos de Usuario}
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{3.5cm} p{3.5cm} X}
+\toprule
+\textbf{Actor} & \textbf{Nivel de Acceso} & \textbf{Responsabilidad en el Sistema} \\
+\midrule
+\textbf{Jefe de Producción} & Operación Completa (\textit{Master}) & Crea y edita recetas/fórmulas, programa órdenes de fabricación, valida existencias globales y autoriza traslados a sucursales. \\
+\addlinespace
+\textbf{Encargado de Almacén} & Operativo / Bodega & Registra el ingreso de nuevos insumos, abastece existencias físicas y atiende las alertas rojas de materias primas agotadas. \\
+\addlinespace
+\textbf{Operario de Sede} & Consulta y Cuadre Local & Monitorea el stock disponible en su sede asignada y aplica ajustes manuales de inventario por ventas diarias o mermas. \\
+\bottomrule
+\end{tabularx}
+\caption{Matriz de Actores y Roles del Sistema.}
+\end{table}
+
+\textit{Nota: En la versión 1.0 del aplicativo, el sistema opera con interfaz abierta basada en rol único operativo (Master), facilitando el acceso rápido en estaciones de planta.}
+
+% ==============================================================================
+% 5. LISTA DE FUNCIONALIDADES DEL SISTEMA (NO CRUD)
+% ==============================================================================
+\section{Lista de Funcionalidades Complejas del Sistema (No CRUD)}
+
+Siguiendo la selección formal acordada por el equipo, las cuatro funcionalidades identificadas que contienen lógica de negocio compleja son:
+
+\subsection{Funcionalidad F1: Gestión de Materia Prima}
+\begin{itemize}
+    \item \textbf{Actor que la utiliza:} Encargado de Almacén y Compras.
+    \item \textbf{Descripción:} Administra el ciclo de vida de los ingredientes con reglas de validación compuestas:
+    \begin{itemize}
+        \item Control de unicidad de nombre sensible a espacios y mayúsculas (RN-01).
+        \item Control de rango estricto: la cantidad debe ser $\ge 0$ (RN-02) y no puede superar el tope máximo de $50$ unidades (RN-04).
+        \item Restricción de unidad de medida predefinida (\texttt{kg}, \texttt{L}, \texttt{g}, etc.) (RN-05).
+        \item Bloqueo de eliminación física si la materia prima pertenece a una fórmula de producción activa (RN-06).
+        \item Historial automático de auditoría ante cualquier cambio en cantidad o datos básicos (RN-07).
+    \end{itemize}
+    \item \textbf{Ejemplo:} Si se intenta registrar \textit{"Aceite de coco"} con cantidad $50.01\,\text{kg}$, el sistema lo rechaza por superar el límite de almacenamiento de 50. Si se intenta eliminar \textit{"Gel de aloe vera"} estando vinculada a la fórmula del champú, el sistema bloquea la acción.
+\end{itemize}
+
+\subsection{Funcionalidad F2: Creación y Definición de Fórmulas}
+\begin{itemize}
+    \item \textbf{Actor que la utiliza:} Jefe de Producción.
+    \item \textbf{Descripción:} Permite estructurar la lista de materiales (Bill of Materials) requerida para la fabricación de cada producto:
+    \begin{itemize}
+        \item Valida que el producto tenga un nombre único en el catálogo.
+        \item Exige que la fórmula contenga al menos una materia prima existente (RN-08).
+        \item Exige que la cantidad requerida de cada insumo sea estrictamente mayor que cero ($>0$).
+        \item Bloquea el ingreso redundante de una misma materia prima dentro de la misma receta (RN-14).
+    \end{itemize}
+    \item \textbf{Ejemplo:} Al crear la fórmula del Champú, si se intenta asociar dos veces el insumo \textit{"Aloe Vera"} o se ingresa cantidad $0\,\text{kg}$, el sistema rechaza la definición de la fórmula.
+\end{itemize}
+
+\subsection{Funcionalidad F3: Producción en Sede Central con Consumo Atómico}
+\begin{itemize}
+    \item \textbf{Actor que la utiliza:} Jefe de Producción.
+    \item \textbf{Descripción:} Registra la elaboración de $Q$ unidades de producto a partir de su fórmula, ejecutando un consumo atómico de materias primas:
+    \begin{itemize}
+        \item Calcula el consumo necesario: $Consumo_i = RequeridoUnitario_i \times Q$.
+        \item Si falta stock de \textbf{cualquier} insumo, se bloquea la orden completa (\textit{Rollback}), sin descontar ningún otro ingrediente (RN-10).
+        \item Si todas las materias primas alcanzan, se descuentan simultáneamente, se incrementa el inventario central del producto terminado y se genera asiento inmutable en la bitácora de movimientos (RN-09).
+        \item Exige que la cantidad $Q$ sea un entero positivo mayor que cero (RN-12, RN-15).
+    \end{itemize}
+    \item \textbf{Ejemplo:} Para fabricar 10 champús que requieren $5\,\text{kg}$ de Aloe y $2\,\text{L}$ de Aceite, si en bodega hay $10\,\text{kg}$ de Aloe pero solo $1.95\,\text{L}$ de Aceite, el sistema aborta la operación y no descuenta nada del Aloe.
+\end{itemize}
+
+\subsection{Funcionalidad F4: Traslado de Productos a Sedes}
+\begin{itemize}
+    \item \textbf{Actor que la utiliza:} Jefe de Producción / Encargado de Logística.
+    \item \textbf{Descripción:} Gestiona el envío físico de productos terminados desde la bodega central hacia las sedes comerciales periféricas:
+    \begin{itemize}
+        \item Valida que el origen sea exclusivamente la sede central y que la cantidad $Q$ sea un entero mayor que cero (RN-11, RN-12).
+        \item Comprueba que la cantidad a despachar no exceda las existencias disponibles en el inventario central.
+        \item Deduce el saldo de central, suma exactamente la misma cantidad al inventario de la sede destino y genera dos registros cruzados de auditoría (\texttt{DISTRIBUCION\_SALIDA} y \texttt{DISTRIBUCION\_ENTRADA}).
+    \end{itemize}
+    \item \textbf{Ejemplo:} Si la central tiene 20 unidades y se solicita enviar 21 unidades a la Sede Norte, el sistema rechaza la solicitud. Si se envían 5 unidades, la central queda con 15 y la Sede Norte con 5.
+\end{itemize}
+
+% ==============================================================================
+% 6. REGLAS DE NEGOCIO IDENTIFICADAS
+% ==============================================================================
+\section{Reglas de Negocio Identificadas}
+
+\begin{longtable}{p{1.8cm} p{10.8cm} p{3.2cm}}
+\caption{Matriz Completa de Reglas de Negocio del Sistema Version-Eco.}\label{tab:reglas}\\
+\toprule
+\textbf{ID Regla} & \textbf{Enunciado de la Regla de Negocio} & \textbf{Origen / Requisito} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\tablename\ \thetable\ -- \textit{Continuación de la página anterior}} \\
+\toprule
+\textbf{ID Regla} & \textbf{Enunciado de la Regla de Negocio} & \textbf{Origen / Requisito} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{Continúa en la siguiente página\dots}} \\
+\endfoot
+\bottomrule
+\endlastfoot
+\textbf{RN-01} & El nombre de materia prima y producto es único. La comparación ignora mayúsculas y espacios sobrantes (``Aloe'' equivale a ``aloe ''). & RF-01, RF-04, RNF-03 \\
+\addlinespace
+\textbf{RN-02} & La cantidad de materia prima puede ser 0, pero nunca negativa. Si queda en 0 se genera una alerta. & Aclaración del equipo \\
+\addlinespace
+\textbf{RN-03} & Ninguna acción permitida puede dejar una materia prima o un inventario con cantidad negativa. & Aclaración del equipo \\
+\addlinespace
+\textbf{RN-04} & La cantidad de una materia prima no puede superar 50 unidades de su medida ($50\,\text{kg}, 50\,\text{L}$). Cualquier alta o ingreso que la deje por encima de 50 se rechaza. & Aclaración del equipo \\
+\addlinespace
+\textbf{RN-05} & La unidad de medida se selecciona de una lista predefinida (\texttt{kg}, \texttt{L}, \texttt{g}, \texttt{ml}, \texttt{unidad}). & RF-01 \\
+\addlinespace
+\textbf{RN-06} & Una materia prima asociada a una fórmula no se puede eliminar. La eliminación exige confirmación. & RF-03 \\
+\addlinespace
+\textbf{RN-07} & Toda modificación de una materia prima genera un registro de historial. & RF-02 \\
+\addlinespace
+\textbf{RN-08} & Una fórmula debe tener al menos una materia prima existente con cantidad $>0$. No puede repetirse dentro de la misma fórmula. & RF-05 \\
+\addlinespace
+\textbf{RN-09} & Consumo de materia prima en una producción = cantidad unitaria de fórmula $\times$ cantidad producida. & RF-09 \\
+\addlinespace
+\textbf{RN-10} & Si alguna materia prima es insuficiente, no se registra la producción y no se descuenta nada (operación atómica). & RF-09 \\
+\addlinespace
+\textbf{RN-11} & Solo se puede trasladar desde la sede central y la cantidad no puede superar el stock disponible en ella. & Aclaración del equipo \\
+\addlinespace
+\textbf{RN-12} & La cantidad a producir o trasladar debe ser un número entero mayor que 0. & Aclaración del equipo \\
+\addlinespace
+\textbf{RN-13} & Solo existe el rol \textit{master}; no hay inicio de sesión en esta versión. & Aclaración del equipo \\
+\addlinespace
+\textbf{RN-14} & Si se intenta agregar la misma materia prima dos veces a una fórmula, el sistema debe rechazarlo. & Deriva de RN-08 \\
+\addlinespace
+\textbf{RN-15} & Producir o trasladar con cantidades decimales, 0 o negativas se rechaza. & Deriva de RN-12 \\
+\addlinespace
+\textbf{RN-16} & El inventario de un producto puede llegar hasta 100 unidades (esta regla no limita la producción por sí misma). & Aclaración del equipo \\
+\end{longtable}
+
+% ==============================================================================
+% 7. DOCUMENTO DE PLAN DE PRUEBAS (ESTRUCTURA COMPLETA)
+% ==============================================================================
+\section{Documento de Plan Maestro de Pruebas (PMP)}
+
+\subsection{Introducción}
+El presente plan de pruebas establece las directrices para verificar el Sistema de Gestión de Inventario para Version-Eco. El sistema tiene como finalidad mejorar el control de materias primas, productos terminados, fórmulas de producción, sedes e inventarios. Además, permite registrar procesos de producción, descontar automáticamente las materias primas utilizadas, realizar ajustes manuales de inventario y generar alertas cuando los niveles de existencia sean bajos.
+
+Las pruebas están orientadas a verificar que las funcionalidades cumplan con los requisitos definidos y que el sistema mantenga la integridad y consistencia de la información durante las operaciones de los usuarios.
+
+\subsection{Alcance de las Pruebas}
+\subsubsection{Funcionalidades que serán probadas}
+El plan contempla las funcionalidades principales definidas en el levantamiento de requisitos:
+\begin{itemize}
+    \item \textbf{RF-01:} Registro de materias primas.
+    \item \textbf{RF-02:} Modificación de materias primas.
+    \item \textbf{RF-03:} Eliminación de materias primas.
+    \item \textbf{RF-04:} Registro de productos.
+    \item \textbf{RF-05:} Definición de fórmulas de producción.
+    \item \textbf{RF-06:} Registro y gestión de sedes.
+    \item \textbf{RF-07:} Consulta de inventario por sede.
+    \item \textbf{RF-08:} Registro de producción.
+    \item \textbf{RF-09:} Descuento automático de materias primas.
+    \item \textbf{RF-10:} Ajuste manual de inventario.
+    \item \textbf{RF-11:} Alerta de stock mínimo de materias primas.
+    \item \textbf{RF-12:} Alerta de stock mínimo de productos.
+    \item Requisitos no funcionales: usabilidad (RNF-01), disponibilidad (RNF-02), integridad (RNF-03) y rendimiento (RNF-04).
+\end{itemize}
+
+\subsubsection{Fuera del alcance}
+\begin{itemize}
+    \item Pruebas de sistemas externos utilizados para registrar ventas comerciales.
+    \item Pruebas de infraestructura física o de hardware de la empresa.
+    \item Pruebas de facturación, pasarelas de pago o contabilidad financiera.
+    \item Pruebas de aplicaciones móviles (el alcance es estrictamente web).
+\end{itemize}
+
+\subsection{Criterios de Entrada y Salida}
+\subsubsection{Criterios de Entrada -- Definition of Ready (DoR)}
+Una funcionalidad podrá comenzar su etapa de pruebas cuando cumpla las siguientes 10 condiciones:
+\begin{enumerate}
+    \item El requisito funcional se encuentra identificado y documentado.
+    \item La funcionalidad ha sido desarrollada.
+    \item La aplicación puede ejecutarse sin errores críticos.
+    \item La base de datos se encuentra disponible.
+    \item El backend puede conectarse correctamente con PostgreSQL.
+    \item El frontend puede comunicarse con la API.
+    \item Existe información o datos de prueba suficientes para ejecutar los casos.
+    \item La funcionalidad se encuentra disponible en el ambiente de pruebas.
+    \item Se conocen los resultados esperados de cada operación.
+    \item Las dependencias necesarias para la funcionalidad se encuentran implementadas (por ejemplo, para probar fórmulas deben existir materias primas y productos registrados).
+\end{enumerate}
+
+\subsubsection{Criterios de Salida -- Definition of Done (DoD)}
+Una funcionalidad se considerará aprobada cuando:
+\begin{enumerate}
+    \item Todos los casos de prueba críticos hayan sido ejecutados.
+    \item Los casos relacionados con requisitos de prioridad alta hayan sido aprobados.
+    \item No existan defectos críticos abiertos.
+    \item Los errores encontrados hayan sido documentados formalmente.
+    \item Los defectos corregidos hayan sido probados nuevamente.
+    \item Se hayan realizado pruebas de regresión sobre las funcionalidades relacionadas.
+    \item Los datos almacenados en la base de datos correspondan con las operaciones realizadas.
+    \item Se hayan registrado las evidencias de ejecución.
+    \item Se haya elaborado el informe de resultados.
+    \item El equipo considere que la funcionalidad cumple con los requisitos definidos.
+\end{enumerate}
+
+\subsubsection{Criterio de Aceptación Global}
+El proyecto se considera apto para entrega cuando el \textbf{100\% de los casos de prioridad alta} hayan sido ejecutados y aprobados, al menos el \textbf{90\% del total de casos} resulten exitosos, y no existan defectos críticos ni de severidad alta abiertos al momento del cierre.
+
+\subsection{Estrategia de Pruebas}
+Se implementan 10 tipos de pruebas combinadas:
+\begin{itemize}
+    \item \textbf{Pruebas Funcionales Positivas:} Comprobar que el sistema permita completar operaciones con datos válidos.
+    \item \textbf{Pruebas Funcionales Negativas:} Provocar intentos no permitidos (duplicados, cantidades inválidas, insumos insuficientes).
+    \item \textbf{Pruebas de Integración:} Evaluar procesos continuos (producción $\rightarrow$ descuento $\rightarrow$ inventario central $\rightarrow$ traslado).
+    \item \textbf{Pruebas de API:} Comprobar endpoints REST y respuestas de estado HTTP.
+    \item \textbf{Pruebas de Interfaz (GUI):} Validar formularios, campos obligatorios, botones y alertas visuales.
+    \item \textbf{Pruebas de Base de Datos:} Verificar que los registros, llaves foráneas y movimientos coincidan en PostgreSQL.
+    \item \textbf{Pruebas de Regresión:} Volver a ejecutar casos tras correcciones en producción o inventario.
+    \item \textbf{Pruebas de Rendimiento:} Validar que las consultas de inventario tomen menos de 2 segundos (RNF-04).
+    \item \textbf{Pruebas de Usabilidad:} Verificar que el registro de materias primas tome menos de 2 minutos (RNF-01).
+\end{itemize}
+
+\subsection{Entorno y Configuración de Pruebas}
+\begin{itemize}
+    \item \textbf{Sistema Operativo:} Windows 10/11.
+    \item \textbf{Base de Datos:} PostgreSQL 18 ejecutándose localmente en puerto 5432 (\texttt{version\_eco\_db}).
+    \item \textbf{Backend:} Node.js 20+, Express 4 en \texttt{http://localhost:4000/api}.
+    \item \textbf{Frontend:} React 18, Vite en \texttt{http://localhost:5173}.
+    \item \textbf{Navegador:} Google Chrome / Mozilla Firefox actualizado.
+\end{itemize}
+
+\subsection{Gestión de Riesgos y Clasificación de Defectos}
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{4.2cm} c c X}
+\toprule
+\textbf{Riesgo} & \textbf{Probabilidad} & \textbf{Impacto} & \textbf{Acción de Mitigación} \\
+\midrule
+Fallo de conexión con PostgreSQL & Media & Alto & Verificar configuración y script antes de las pruebas. \\
+Datos de prueba insuficientes & Media & Medio & Cargar scripts de seed demo previamente. \\
+Defectos en producción que afectan inventario & Media & Alto & Priorizar pruebas de producción y descuentos. \\
+Cálculos incorrectos de recetas & Media & Alto & Comparar fórmulas con cantidades resultantes en BD. \\
+Inventarios negativos & Baja & Alto & Validar restricciones \texttt{CHECK} a nivel relacional. \\
+Eliminación accidental de información & Baja & Alto & Utilizar base de datos de pruebas aislada. \\
+Diferencias entre frontend y backend & Media & Alto & Ejecutar pruebas de integración completas. \\
+\bottomrule
+\end{tabularx}
+\caption{Matriz de Riesgos del Plan de Pruebas.}
+\end{table}
+
+\textbf{Clasificación de Defectos:}
+\begin{itemize}
+    \item \textbf{Crítico:} Impide utilizar una función esencial o provoca pérdida/corrupción de información.
+    \item \textbf{Alto:} Afecta considerablemente una funcionalidad principal sin alternativa inmediata.
+    \item \textbf{Medio:} Existe el error, pero se puede continuar operando el sistema.
+    \item \textbf{Bajo:} Problemas cosméticos o menores que no impiden el funcionamiento.
+\end{itemize}
+
+\subsection{Roles y Responsabilidades}
+\begin{itemize}
+    \item \textbf{Líder de pruebas (Benjamin Ortiz):} Coordinar la ejecución y controlar el cumplimiento del plan.
+    \item \textbf{Analista de pruebas (Samuel Rueda):} Diseñar casos y relacionarlos con los requisitos y técnicas de caja negra.
+    \item \textbf{Ejecutor de pruebas (Harold Guerrero):} Ejecutar casos en el navegador y almacenar evidencias.
+    \item \textbf{Responsable de defectos (Daniela Orobio):} Registrar los errores, documentar causa raíz y realizar seguimiento.
+\end{itemize}
+
+\subsection{Observación de Trazabilidad entre Requisito e Implementación}
+En la documentación inicial, el requisito RF-08 indicaba que al registrar producción se especificaba la sede donde se elaboró. Sin embargo, la arquitectura actual maneja primero un \textbf{Inventario Central} donde ingresa el producto terminado y, posteriormente, una operación independiente de \textbf{Distribución} hacia las sedes. Esta diferencia se documenta formalmente para mantener la trazabilidad entre el requisito de negocio y la implementación real.
+
+% ==============================================================================
+% 8. DISEÑO DE CASOS DE PRUEBA (CAJA NEGRA)
+% ==============================================================================
+\section{Diseño de Casos de Prueba (Caja Negra)}
+
+\subsection{Relación entre Funcionalidades y Casos de Prueba (Cobertura Intrínseca)}
+En el contexto de aseguramiento de calidad, existe una relación jerárquica y de dependencia directa entre las \textbf{Funcionalidades (Features)} y los \textbf{Casos de Prueba (Test Cases)}:
+\begin{itemize}
+    \item \textbf{Las Funcionalidades (F1, F2, F3, F4)} representan los macro-procesos del negocio que agrupan y satisfacen los requisitos funcionales (RF) del cliente.
+    \item \textbf{Los Casos de Prueba (31 casos)} son las ejecuciones atómicas diseñadas mediante técnicas formales (Tablas de Decisión, Arreglos Ortogonales y Valores Límite) que someten a prueba las entradas, reglas de validación y límites de cada funcionalidad.
+    \item \textbf{Interdependencia y Cobertura Intrínseca (Cadena de Valor):}\\
+    El sistema no opera con módulos aislados, sino con una cadena de custodia del inventario:
+    \begin{equation*}
+        \text{F1 (Materias Primas)} \xrightarrow{\text{Insumo para}} \text{F2 (Fórmulas)} \xrightarrow{\text{Receta para}} \text{F3 (Producción Central)} \xrightarrow{\text{Stock para}} \text{F4 (Traslado a Sedes)}
+    \end{equation*}
+    Por tanto, \textbf{al probar una funcionalidad aguas abajo se evalúan intrínsecamente las funcionalidades previas}:
+    \begin{enumerate}[noitemsep]
+        \item Para definir una fórmula (\textbf{F2}), es un prerrequisito obligatorio haber creado los insumos en \textbf{F1}.
+        \item Al ejecutar una orden de manufactura (\textbf{F3}), el sistema valida intrínsecamente la fórmula (\textbf{F2}), descuenta el stock de insumos (\textbf{F1}), actualiza el inventario central y dispara reactivamente las alertas en el Dashboard.
+        \item Para realizar una distribución a sucursales (\textbf{F4}), se requiere forzosamente el producto terminado fabricado en \textbf{F3} y las sedes registradas en el sistema.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{Prerrequisitos de la Base de Datos y Datos de Prueba (Baseline)}
+Para garantizar la repetibilidad y consistencia de los 31 casos de prueba, la base de datos local (\texttt{version\_eco\_db}) debe encontrarse en un estado inicial controlado (\textit{Baseline}), el cual se establece mediante los scripts \texttt{01\_schema\_version\_eco.sql} y \texttt{02\_seed\_demo.sql}:
+
+\begin{tcolorbox}[colback=lightgray,colframe=primary,title=\textbf{Estado Inicial de la Base de Datos (Prerrequisitos de Ejecución)}]
+\small
+\begin{enumerate}[leftmargin=0.6cm]
+    \item \textbf{Sedes Registradas:}
+    \begin{itemize}[noitemsep]
+        \item Sede Central (administrada internamente por el sistema para producción).
+        \item Sede A (ej: \textit{Sede Principal - Norte}) y Sede B (ej: \textit{Sede Chapinero}), ambas con inventario inicial $= 0$.
+    \end{itemize}
+    \item \textbf{Catálogo de Materias Primas de Referencia:}
+    \begin{itemize}[noitemsep]
+        \item Insumo A: \textit{Gel de Aloe Vera} (Unidad: \texttt{kg}, Nivel mínimo: 1.0).
+        \item Insumo B: \textit{Aceite de Coco Orgánico} (Unidad: \texttt{L}, Nivel mínimo: 1.0).
+        \item Insumo C: \textit{Glicerina Vegetal} (Unidad: \texttt{kg}, Nivel mínimo: 1.0).
+        \item Insumo D (para pruebas de eliminación F1-CP-08): \textit{Sal Marina} ($5\,\text{kg}$, sin asociar a recetas).
+    \end{itemize}
+    \item \textbf{Catálogo de Productos y Fórmulas (BOM):}
+    \begin{itemize}[noitemsep]
+        \item Producto Patrón: \textit{Champú Vegano de Romero y Aloe (80g)}.
+        \item Composición de la Fórmula (por 1 unidad): Insumo A = $0.5\,\text{kg}$, Insumo B = $0.2\,\text{L}$, Insumo C = $0.1\,\text{kg}$.
+    \end{itemize}
+    \item \textbf{Inventario Central Inicial:} 0 unidades de Champú Vegano en bodega central.
+    \item \textbf{Ajuste Dinámico por Caso:} Antes de ejecutar cada corrida de F3, el stock disponible de A, B y C se ajusta a los valores exactos definidos en la columna \textit{Entradas} mediante el módulo de Materias Primas.
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Resumen de Casos Diseñados por Funcionalidad}
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Funcionalidad} & \textbf{Total Casos} & \textbf{Técnicas Asignadas} & \textbf{Casos con Defecto Conocido} \\
+\midrule
+\textbf{F3: Registro de producción} & 12 & Arreglo Ortogonal $L_9(3^4)$ + Tabla de Decisión & 0 \\
+\textbf{F4: Traslado de productos a sedes} & 7 & Tabla de Decisión + Valores Límite & 0 \\
+\textbf{F1: Gestión de materia prima} & 8 & Tabla de Decisión + Valores Límite & 1 (F1-CP-03) \\
+\textbf{F2: Creación de fórmulas} & 4 & Tabla de Decisión & 0 \\
+\midrule
+\textbf{TOTAL} & \textbf{31} & & \textbf{1} \\
+\bottomrule
+\end{tabular}
+\caption{Consolidado del Alcance de Casos de Prueba Diseñados.}
+\end{table}
+
+\subsection{Precondiciones y Pasos de Ejecución Comunes (Procedimiento Operativo)}
+
+\begin{tcolorbox}[colback=lightgray,colframe=secondary,title=\textbf{Procedimiento F3: Registro de Producción}]
+\textbf{Precondiciones:}
+\begin{enumerate}[noitemsep]
+    \item Sistema desplegado y accesible desde el navegador web.
+    \item Base de datos limpia con sede central, producto \textit{Champú vegano} y su fórmula ($A=0.5\,\text{kg}, B=0.2\,\text{L}, C=0.1\,\text{kg}$ por unidad), nivel mínimo 1 en cada materia prima.
+    \item Inventario inicial del producto en sede central igual a 0.
+    \item Stock inicial de A, B y C ajustado según las Entradas de cada caso.
+\end{enumerate}
+\textbf{Pasos de Ejecución:}
+\begin{enumerate}[noitemsep]
+    \item Ajustar el stock de A, B y C a los valores del caso desde el módulo \textit{Materias Primas}.
+    \item Anotar los valores iniciales de A, B, C y del inventario del producto.
+    \item Ingresar al módulo \textit{Producción}.
+    \item Seleccionar el producto \textit{Champú vegano}.
+    \item Ingresar la cantidad $Q$ indicada en el caso.
+    \item Confirmar el registro de la producción.
+    \item Consultar stock de A, B y C, inventario central y alertas, comparando con el resultado esperado.
+\end{enumerate}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=lightgray,colframe=secondary,title=\textbf{Procedimiento F4: Traslado de Productos a Sedes}]
+\textbf{Precondiciones:}
+\begin{enumerate}[noitemsep]
+    \item Sistema desplegado y accesible desde el navegador.
+    \item Producto \textit{Champú vegano} con inventario central = 20 (producido previamente).
+    \item Sede A y Sede B registradas en el módulo \textit{Sedes}, ambas con inventario = 0.
+\end{enumerate}
+\textbf{Pasos de Ejecución:}
+\begin{enumerate}[noitemsep]
+    \item Anotar el inventario central y el de las sedes (módulos \textit{Distribución} e \textit{Inventario}).
+    \item Ir al módulo \textit{Distribución} (se muestra formulario ``Enviar producto a sede'').
+    \item Seleccionar el producto \textit{Champú vegano} y la sede destino.
+    \item Ingresar la cantidad $Q$ y la referencia \texttt{"TEST"}.
+    \item Pulsar el botón \textit{Distribuir}.
+    \item Consultar el inventario central y el de las sedes para validar los nuevos saldos.
+\end{enumerate}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=lightgray,colframe=secondary,title=\textbf{Procedimiento F1 y F2: Materias Primas y Fórmulas}]
+\textbf{F1 (Gestión de Materia Prima):}
+\begin{enumerate}[noitemsep]
+    \item Precondición: Existe la materia prima \textit{"Aloe vera"} ($10\,\text{kg}$) usada en fórmula, y \textit{"Sal"} ($5\,\text{kg}$) sin fórmula.
+    \item Pasos: Ir a \textit{Materias Primas} $\rightarrow$ Ejecutar alta o eliminación con las entradas indicadas $\rightarrow$ Verificar listado, alertas e historial.
+\end{enumerate}
+\textbf{F2 (Creación de Fórmulas):}
+\begin{enumerate}[noitemsep]
+    \item Precondición: Existen insumos \textit{"Aloe vera"} y \textit{"Aceite de coco"} y el producto \textit{"Champú vegano"}.
+    \item Pasos: Ir a \textit{Productos y Fórmulas} $\rightarrow$ Definir la fórmula con las materias y cantidades del caso $\rightarrow$ Consultar la fórmula guardada.
+\end{enumerate}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=primary!5,colframe=primary,title=\textbf{Nomenclatura y Variables de Prueba Utilizadas en la Matriz}]
+Para facilitar la lectura y correspondencia con el diseño de Taguchi y Tablas de Decisión del equipo, se definen los siguientes parámetros operativos:
+\begin{itemize}[noitemsep]
+    \item \textbf{$Q$ (Quantity):} Cantidad numérica entera de unidades a producir (en F3) o a transferir (en F4).
+    \item \textbf{$A$ (Materia Prima A):} \textit{"Aloe vera"} (Unidad: kg). Dosificación en fórmula: $0.5\,\text{kg}$ por unidad. Nivel mínimo de alerta: $1.0\,\text{kg}$.
+    \item \textbf{$B$ (Materia Prima B):} \textit{"Aceite de coco"} (Unidad: kg). Dosificación en fórmula: $0.2\,\text{kg}$ por unidad. Nivel mínimo de alerta: $1.0\,\text{kg}$.
+    \item \textbf{$C$ (Materia Prima C):} \textit{"Romero"} (Unidad: kg). Dosificación en fórmula: $0.1\,\text{kg}$ por unidad. Nivel mínimo de alerta: $1.0\,\text{kg}$.
+    \item \textbf{Producto Evaluado:} \textit{"Champú vegano"}, cuya receta oficial vincula exactamente los insumos $A$, $B$ y $C$.
+    \item \textbf{Criterio de Alerta Roja:} Se dispara automáticamente cuando el stock remanente de cualquier materia prima es menor o igual a su nivel mínimo ($1.0$).
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Matriz Detallada de los 31 Casos de Prueba Diseñados}
+
+\begin{longtable}{p{1.4cm} p{1.6cm} p{4.2cm} p{3.2cm} p{4.6cm}}
+\caption{Matriz Completa de los 31 Casos de Prueba con Precondiciones y Entradas.}\label{tab:casos31}\\
+\toprule
+\textbf{ID Caso} & \textbf{Prior./Téc.} & \textbf{Precondición Específica} & \textbf{Entrada(s) de Prueba} & \textbf{Resultado Esperado} \\
+\midrule
+\endfirsthead
+\multicolumn{5}{c}{\tablename\ \thetable\ -- \textit{Continuación de la página anterior}} \\
+\toprule
+\textbf{ID Caso} & \textbf{Prior./Téc.} & \textbf{Precondición Específica} & \textbf{Entrada(s) de Prueba} & \textbf{Resultado Esperado} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{5}{r}{\textit{Continúa en la siguiente página\dots}} \\
+\endfoot
+\bottomrule
+\endlastfoot
+\multicolumn{5}{l}{\textbf{\color{primary}Módulo F3: Registro de Producción Centralizada}} \\
+\midrule
+\textbf{F3-CP-01} & Alta \newline AO 1 + TD & Fórmula de Champú activa ($A{=}0.5, B{=}0.2, C{=}0.1$). Stock: $A{=}10, B{=}7, C{=}6$. Prod. central: $0$. & $Q=10$ unid. a producir. & Producción exitosa. Descuento exacto: $A{=}5, B{=}5, C{=}5$. Stock champú $+10$. Sin alertas. \\
+\textbf{F3-CP-02} & Alta \newline AO 2 + TD & Fórmula activa. Stock inicial: $A{=}17.5, B{=}5, C{=}2.5$. & $Q=25$ unid. & Producción registrada. Final: $A{=}5, B{=}0, C{=}0$. Inventario $+25$. Genera alertas rojas en B y C. \\
+\textbf{F3-CP-03} & Crítica \newline AO 3 + TD & Fórmula activa. Stock inicial: $A{=}5.5, B{=}0.15, C{=}0.05$ (insuficiente en B y C). & $Q=1$ unid. & Rechazo por insuficiencia de B y C. Rollback total: stocks e inventario sin modificación. \\
+\textbf{F3-CP-04} & Crítica \newline AO 4 + TD & Fórmula activa. Stock inicial: $A{=}5, B{=}2, C{=}0.95$ (requiere $1$ de C). & $Q=10$ unid. & Rechazo por falta de C. A y B siguen intactos en 5 y 2 (sin descuento parcial). \\
+\textbf{F3-CP-05} & Crítica \newline AO 5 + TD & Fórmula activa. Stock inicial: $A{=}12.5, B{=}4.95, C{=}7.5$ (requiere $5$ de B). & $Q=25$ unid. & Rechazo por falta de B. A y C siguen en 12.5 y 7.5. Inventario sin alteraciones. \\
+\textbf{F3-CP-06} & Alta \newline AO 6 + TD & Fórmula activa. Stock inicial: $A{=}0.5, B{=}5.2, C{=}0.1$. & $Q=1$ unid. & Producción exitosa. Final: $A{=}0, B{=}5, C{=}0$. Inventario $+1$. Alerta roja en A y C. \\
+\textbf{F3-CP-07} & Crítica \newline AO 7 + TD & Fórmula activa. Stock inicial: $A{=}4.95, B{=}1.95, C{=}1$ (requiere $5$ de A y $2$ de B). & $Q=10$ unid. & Rechazo por falta de A y B. Stock de C permanece en 1. Sin creación de orden. \\
+\textbf{F3-CP-08} & Crítica \newline AO 8 + TD & Fórmula activa. Stock inicial: $A{=}12.45, B{=}10, C{=}2.45$ (requiere $12.5$ de A y $2.5$ de C). & $Q=25$ unid. & Rechazo por falta de A y C. Insumo B sigue en 10. Inventario sin cambios. \\
+\textbf{F3-CP-09} & Crítica \newline AO 9 + TD & Fórmula activa. Stock inicial: $A{=}0.45, B{=}0.2, C{=}5.1$ (requiere $0.5$ de A). & $Q=1$ unid. & Rechazo por falta de A. B y C siguen en 0.2 y 5.1. Transacción revertida. \\
+\textbf{F3-CP-10} & Alta \newline TD (R1) & Producto con fórmula y materias primas disponibles en bodega. & $Q=0$ unid. & Rechazo por cantidad inválida ($Q \le 0$). Inventarios y stocks intactos. \\
+\textbf{F3-CP-11} & Alta \newline TD (R1) & Producto con fórmula activa disponible. & $Q=-5$ unid. & Rechazo por valor negativo inválido. Bloqueo en validación frontal y backend. \\
+\textbf{F3-CP-12} & Alta \newline TD (R1) & Materias primas con stock suficiente en bodega. & $Q=2.5$ unid. (decimal) & Rechazo por cantidad fraccionaria. Se requiere valor entero estricto. \\
+\midrule
+\multicolumn{5}{l}{\textbf{\color{primary}Módulo F4: Traslado de Productos a Sedes}} \\
+\midrule
+\textbf{F4-CP-01} & Alta \newline TD & Sede Central tiene 20 unid. Champú. Sede Norte tiene 0 unid. & Trasladar $Q=5$ unid. a Sede Norte. & Traslado exitoso. Central disminuye a 15, Sede Norte incrementa a 5. \\
+\textbf{F4-CP-02} & Alta \newline TD + VL & Sede Central tiene 20 unid. Sede Norte tiene 0 unid. & Trasladar $Q=20$ unid. a Sede Norte (límite superior). & Traslado exitoso. Central queda en 0 unid.; Sede Norte queda en 20 unid. \\
+\textbf{F4-CP-03} & Crítica \newline TD + VL & Sede Central tiene 20 unid. Sede Norte tiene 0 unid. & Trasladar $Q=21$ unid. a Sede Norte (límite $+ 1$). & Rechazo por stock insuficiente. Central mantiene 20 y Sede Norte mantiene 0. \\
+\textbf{F4-CP-04} & Alta \newline TD & Sede Central cuenta con existencias disponibles ($>10$). & Trasladar $Q=2.5$ unid. a Sede Norte. & Rechazo por formato no entero. Bloqueo en control de entrada y validación API. \\
+\textbf{F4-CP-05} & Alta \newline TD & Sede Central tiene 20 unid. Sede Sur tiene saldo previo de 3 unid. & Trasladar $Q=4$ unid. a Sede Sur. & Traslado exitoso acumulativo. Central queda en 13 unid., Sede Sur queda en 7 unid. \\
+\textbf{F4-CP-06} & Alta \newline TD & Sedes origen y destino válidas y seleccionadas. & Trasladar $Q=0$ unid. a Sede Norte. & Rechazo por cantidad cero inválida ($Q \le 0$). Sin afectación en inventarios. \\
+\textbf{F4-CP-07} & Alta \newline TD & Sedes origen y destino seleccionadas. & Trasladar $Q=-5$ unid. a Sede Norte. & Rechazo inmediato por valor negativo inválido. Saldos inalterados. \\
+\midrule
+\multicolumn{5}{l}{\textbf{\color{primary}Módulo F1: Gestión de Materia Prima}} \\
+\midrule
+\textbf{F1-CP-01} & Alta \newline TD & Insumo "Aceite de coco" no existe en el catálogo. & Nombre: "Aceite de coco", Unidad: "Litros", Stock: 20. & Registro exitoso. Insumo creado en catálogo con ID y stock inicial asignado. \\
+\textbf{F1-CP-02} & Alta \newline TD & Existe previamente la materia prima "Aloe vera" en el sistema. & Nombre: "Aloe vera", Unidad: "kg", Stock: 5. & Rechazo por nombre duplicado exacto (Error 409). No se duplica en BD. \\
+\textbf{F1-CP-03} & Alta \newline TD & Existe previamente la materia prima "Aloe vera" en el sistema. & Nombre: \texttt{"aloe vera "} (minúsculas y espacio final). & Rechazo por duplicado según RN-01 (normalización). \textit{[DEF-01: detectado fallo en backend].} \\
+\textbf{F1-CP-04} & Alta \newline TD + VL & Catálogo disponible sin el insumo "Glicerina". & Nombre: "Glicerina", Unidad: "kg", Stock: 50 (límite superior). & Registro exitoso en el límite superior admitido de 50 kg/l (RN-04). \\
+\textbf{F1-CP-05} & Alta \newline TD + VL & Catálogo disponible. Capacidad máxima definida en 50. & Nombre: "Glicerina", Unidad: "kg", Stock: 50.01 (límite $+ 0.01$). & Rechazo por exceder capacidad máxima de almacenamiento (RN-04). \\
+\textbf{F1-CP-06} & Alta \newline TD & Formulario de materias primas abierto. & Nombre: "Glicerina", Unidad: "kg", Stock: -1. & Rechazo por cantidad negativa no permitida. Bloqueo de entrada. \\
+\textbf{F1-CP-07} & Media \newline TD & Catálogo disponible. Insumo nuevo no registrado. & Nombre: "Glicerina", Unidad: "kg", Stock: 0. & Registro exitoso y generación inmediata de alerta visual roja por stock en 0 (RN-05). \\
+\textbf{F1-CP-08} & Media \newline TD & "Aloe vera" está asociada a la fórmula activa de Champú. & Solicitar eliminación física de "Aloe vera". & Eliminación rechazada (Error 409) por restricción de integridad referencial (RN-02). \\
+\midrule
+\multicolumn{5}{l}{\textbf{\color{primary}Módulo F2: Creación de Fórmulas}} \\
+\midrule
+\textbf{F2-CP-01} & Alta \newline TD & Insumos Aloe y Aceite existen. Producto "Champú" sin receta. & Aloe vera (0.5 kg) + Aceite de coco (0.2 L). & Fórmula creada y vinculada exitosamente al producto. Consultable en catálogo. \\
+\textbf{F2-CP-02} & Alta \newline TD & Producto registrado sin fórmula asociada. & Guardar fórmula sin agregar ningún insumo. & Rechazo: la receta exige al menos una materia prima (RN-07). \\
+\textbf{F2-CP-03} & Alta \newline TD & Producto seleccionado; insumo "Aloe vera" ya agregado a la lista. & Agregar nuevamente "Aloe vera" (Aloe 0.5 + Aloe 0.3). & Rechazo por insumo duplicado dentro de la misma fórmula (RN-08). \\
+\textbf{F2-CP-04} & Alta \newline TD & Producto y materia prima seleccionados en formulario. & Asignar cantidad requerida en cero ($Q{=}0$). & Rechazo: la cantidad requerida de insumo debe ser estrictamente $>0$. \\
+\end{longtable}
+
+% ==============================================================================
+% 9. REPORTE DE RESULTADOS Y EVIDENCIAS DE EJECUCIÓN
+% ==============================================================================
+\section{Reporte de Resultados y Evidencias de Ejecución}
+
+\subsection{Resumen Estadístico Consolidado}
+
+Se ejecutó el ciclo completo de los \textbf{31 casos de prueba} sobre el software desplegado localmente en ambiente controlado:
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{l c c c c c r}
+\toprule
+\textbf{Feature / Módulo} & \textbf{Total} & \textbf{Aprobado} & \textbf{Fallido} & \textbf{Bloqueado} & \textbf{No Ejec.} & \textbf{\% Aprobado} \\
+\midrule
+\textbf{F3: Registro de producción} & 12 & 12 & 0 & 0 & 0 & \textbf{100.0\%} \\
+\textbf{F4: Traslado de productos a sedes} & 7 & 7 & 0 & 0 & 0 & \textbf{100.0\%} \\
+\textbf{F1: Gestión de materia prima} & 8 & 7 & 1 & 0 & 0 & \textbf{87.5\%} \\
+\textbf{F2: Creación de fórmulas} & 4 & 4 & 0 & 0 & 0 & \textbf{100.0\%} \\
+\midrule
+\textbf{TOTAL GENERAL} & \textbf{31} & \textbf{30} & \textbf{1} & \textbf{0} & \textbf{0} & \textbf{96.77\%} \\
+\bottomrule
+\end{tabular}
+\caption{Consolidado de Resultados de Ejecución de Pruebas.}
+\end{table}
+
+\begin{tcolorbox}[colback=accentgreen!10,colframe=accentgreen,title=\textbf{Dictamen de Certificación del Sistema}]
+\textbf{Tasa Global de Aprobación:} \textbf{96.77\%} (30 casos aprobados de 31 ejecutados).\\
+\textbf{Resultado:} \textbf{APROBADO PARA CERTIFICACIÓN}. Supera con holgura el umbral mínimo del 90\% establecido en el Plan Maestro de Pruebas, no presentándose ningún defecto de severidad crítica ni alta.
+\end{tcolorbox}
+
+\subsection{Matriz de Resultados de Ejecución Caso por Caso}
+
+\begin{longtable}{p{1.6cm} p{3.4cm} p{7.8cm} p{2.2cm}}
+\caption{Matriz Detallada de Ejecución de los 31 Casos de Prueba.}\label{tab:ejecucion31}\\
+\toprule
+\textbf{ID Caso} & \textbf{Resultado Esperado} & \textbf{Resultado Obtenido en Ejecución Real} & \textbf{Estado} \\
+\midrule
+\endfirsthead
+\multicolumn{4}{c}{\tablename\ \thetable\ -- \textit{Continuación de la página anterior}} \\
+\toprule
+\textbf{ID Caso} & \textbf{Resultado Esperado} & \textbf{Resultado Obtenido en Ejecución Real} & \textbf{Estado} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{4}{r}{\textit{Continúa en la siguiente página\dots}} \\
+\endfoot
+\bottomrule
+\endlastfoot
+\textbf{F3-CP-01} & Producción $+10$. Final: $A=5, B=5, C=5$. & Lote registrado. Saldos descontados exactamente. Inv $+10$. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F3-CP-02} & Producción $+25$. Final: $A=5, B=0, C=0$. Alertas. & Lote creado. B y C en 0. Alertas rojas visibles en Dashboard. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F3-CP-03} & Rechazo por falta de B y C. Stock intacto. & Excepción capturada. Stock de A, B y C sin cambios. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F3-CP-04} & Rechazo por C. Sin descuento parcial de A y B. & Operación cancelada. A y B permanecen en 5 y 2. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F3-CP-05} & Rechazo por B. A y C sin cambios. & Bloqueo exitoso. A y C conservan saldos $12.5$ y $7.5$. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F3-CP-06} & Producción $+1$. Final: $A=0, B=5, C=0$. & Lote creado. Alertas de desabastecimiento en A y C. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F3-CP-07} & Rechazo por falta de A y B. C intacto. & Bloqueo y Rollback confirmado. Sin alteraciones en BD. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F3-CP-08} & Rechazo por falta de A y C. B intacto. & Bloqueo confirmado. B permanece en 10. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F3-CP-09} & Rechazo por falta de A ($0.45 < 0.5$). & Bloqueo confirmado. Insumos B y C se mantienen intactos. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F3-CP-10} & Rechazo por cantidad cero ($Q=0$). & Formulario bloquea el envío (control HTML5 \texttt{min="1"}). & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F3-CP-11} & Rechazo por cantidad negativa ($Q=-5$). & Validación de entrada rechaza el valor; sin cambios en BD. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F3-CP-12} & Rechazo por cantidad decimal ($Q=2.5$). & El campo numérico entero impide registrar decimales. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F4-CP-01} & Traslado 5: Central 15, Sede A 5. & Despacho exitoso. Central queda en 15 y Sede A en 5. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F4-CP-02} & Traslado límite 20: Central 0, Sede A 20. & Despacho exitoso. Central queda exactamente en 0. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F4-CP-03} & Traslado 21 excede stock: Rechazo. & Mensaje en pantalla: ``Stock insuficiente en central''. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F4-CP-04} & Traslado decimal $2.5$: Rechazo. & Formulario bloquea el valor fraccionario. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F4-CP-05} & Suma acumulada en Sede B: Central 13, Sede 7. & Saldos finales coinciden exactamente con la suma teórica. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F4-CP-06} & Traslado cantidad 0: Rechazo. & Validación de formulario impide enviar cantidad nula. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F4-CP-07} & Traslado negativo $-5$: Rechazo. & Bloqueo en interfaz y rechazo en API. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F1-CP-01} & Alta válida: Aceite de coco registrado. & Insumo insertado exitosamente en catálogo. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F1-CP-02} & Nombre duplicado exacto: Rechazo. & Retorna error HTTP 409 por violación de unicidad. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F1-CP-03} & Duplicado con mayúsculas y espacios: Rechazo. & \textbf{El sistema permitió crear ``aloe vera '' habiendo ``Aloe vera''.} & \textbf{\textcolor{accentred}{Fallido}} \\
+\textbf{F1-CP-04} & Cantidad en tope 50: Registro válido. & Registrado con $50\,\text{kg}$ en almacén. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F1-CP-05} & Cantidad $50.01$: Rechazo por exceder 50. & Operación bloqueada; no permite superar el límite. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F1-CP-06} & Cantidad negativa $-1$: Rechazo. & Control de formulario impide valores negativos. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F1-CP-07} & Cantidad 0: Registrado con alerta. & Insumo registrado con 0; semáforo rojo se activa en Dashboard. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F1-CP-08} & Eliminar insumo en fórmula: Bloqueado. & Mensaje de error 409: insumo con receta activa. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F2-CP-01} & Fórmula válida: Receta guardada. & Composición almacenada y consultable en producto. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F2-CP-02} & Fórmula sin insumos: Rechazo. & Sistema exige vincular al menos una materia prima. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F2-CP-03} & Materia repetida: Rechazo. & Interfaz impide agregar dos veces el mismo ingrediente. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\textbf{F2-CP-04} & Cantidad en 0: Rechazo. & Se exige cantidad requerida $>0$. & \textbf{\textcolor{accentgreen}{Aprobado}} \\
+\end{longtable}
+
+\subsection{Documentación del Defecto Encontrado}
+
+\begin{tcolorbox}[colback=lightgray,colframe=accentred,title=\textbf{Ficha de Defecto: DEF-01 (F1-CP-03 -- Violación de RN-01)}]
+\small
+\textbf{Identificador:} DEF-01 \quad \textbf{Severidad:} Media \quad \textbf{Prioridad:} Media \quad \textbf{Estado:} Abierto\\
+\textbf{Funcionalidad Afectada:} F1 -- Gestión de Materia Prima / Endpoint \texttt{POST /api/materias-primas}\\[2mm]
+\textbf{Descripción:}\\
+Al crear una nueva materia prima cuyo nombre coincide con una previamente registrada variando únicamente en mayúsculas o espacios terminales (ejemplo: ingresar \texttt{"aloe vera "} cuando ya existe \texttt{"Aloe vera"}), el sistema acepta la inserción con código HTTP 201 en lugar de rechazarla con HTTP 409 Conflict.\\[2mm]
+\textbf{Pasos para Reproducir:}
+\begin{enumerate}[noitemsep]
+    \item Acceder al módulo \textit{Materias Primas}.
+    \item Diligenciar el formulario con Nombre: \texttt{"aloe vera "}, Unidad: \texttt{kg}, Cantidad: \texttt{5}.
+    \item Presionar el botón \textit{Guardar}.
+    \item Observar que se crea un segundo registro redundante en el listado.
+\end{enumerate}
+\textbf{Causa Raíz:} El backend no aplica la función de sanitización \texttt{.trim().toLowerCase()} antes de ejecutar la consulta de verificación ni en la cláusula de inserción SQL.\\
+\textbf{Solución Recomendada:} Normalizar la entrada con \texttt{nombre.trim().toLowerCase()} en el controlador y asegurar el índice único relacional:\\
+\texttt{CREATE UNIQUE INDEX uq\_mp\_norm ON materia\_prima (LOWER(TRIM(nombre))) WHERE deleted\_at IS NULL;}
+\end{tcolorbox}
+
+% ==============================================================================
+% 10. CONCLUSIONES
+% ==============================================================================
+\section{Conclusiones y Evaluación de la Calidad}
+
+\begin{enumerate}
+    \item \textbf{Efectividad de la Estrategia de Pruebas:} La combinación de Arreglos Ortogonales ($L_9$) y Tablas de Decisión permitió someter a prueba exhaustiva la funcionalidad crítica de producción con solo 12 corridas, demostrando que el procedimiento almacenado de PostgreSQL cumple rigurosamente la regla de atomicidad (RN-10).
+    \item \textbf{Aprobación Formal del Software:} Al alcanzar un \textbf{96.77\% de casos superados} frente al estándar del 90\%, el sistema Version-Eco se certifica como estable, consistente y apto para su utilización operativa.
+    \item \textbf{Identificación Exitosa de Defectos:} Las pruebas manuales planificadas permitieron capturar y aislar el defecto conocido DEF-01 en el catálogo de materias primas, proporcionando la solución técnica preventiva para el siguiente sprint.
+\end{enumerate}
+
+\end{document}
