@@ -1,6 +1,8 @@
-export class ProductosPage {
+import { BasePage } from './BasePage.js';
+
+export class ProductosPage extends BasePage {
   constructor(page) {
-    this.page = page;
+    super(page, '/productos');
     this.panelTitle = page.locator('h3');
     this.agregarMateriaBtn = page.getByRole('button', { name: 'Agregar Materia Prima' });
     this.guardarFormulaBtn = page.getByRole('button', { name: 'Guardar Formula' });
@@ -8,23 +10,19 @@ export class ProductosPage {
     this.errorBanner = page.locator('.error-msg');
   }
 
-  async goto() {
-    await this.page.goto('/productos');
-  }
-
   async abrirConfiguracionFormula(nombreProducto) {
-    await this.page
+    const configBtn = this.page
       .locator('tr', { hasText: nombreProducto })
-      .getByRole('button', { name: 'Configurar' })
-      .click();
+      .getByRole('button', { name: 'Configurar' });
+    await this.click(configBtn);
   }
 
   async agregarIngredientes(ingredientes) {
     for (let i = 0; i < ingredientes.length; i++) {
-      await this.agregarMateriaBtn.click();
+      await this.click(this.agregarMateriaBtn);
       const row = this.formulaRows.nth(i);
       await row.locator('select').selectOption(String(ingredientes[i].materiaId));
-      await row.locator('input[type="number"]').fill(String(ingredientes[i].cantidad));
+      await this.fill(row.locator('input[type="number"]'), ingredientes[i].cantidad);
     }
   }
 
@@ -33,7 +31,7 @@ export class ProductosPage {
     const respPromise = this.page.waitForResponse(
       (res) => res.url().includes(`/api/productos/${prodId}/formula`) && res.request().method() === 'PUT'
     );
-    await this.guardarFormulaBtn.click();
+    await this.click(this.guardarFormulaBtn);
     const [resp, dialog] = await Promise.all([respPromise, dialogPromise]);
     const dialogMessage = dialog.message();
     await dialog.accept();
@@ -54,7 +52,7 @@ export class ProductosPage {
       )
       .catch(() => null);
 
-    await this.guardarFormulaBtn.click();
+    await this.click(this.guardarFormulaBtn);
     const resp = await respPromise;
     return { resp, dialogMessage };
   }

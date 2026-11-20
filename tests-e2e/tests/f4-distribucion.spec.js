@@ -1,14 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/test.fixture.js';
 import { resetBaseline, getStocksSnapshot } from '../helpers/db.js';
-import { DistribucionPage } from '../pages/DistribucionPage.js';
 
 test.describe('F4 - Traslado de Productos a Sedes (TD + VL)', () => {
-  test('F4-CP-01 - Traslado valido parcial (Q=5 a Sede A)', async ({ page }) => {
+  test.beforeEach(async ({ distribucionPage }) => {
     await resetBaseline({ invCentral: 20 });
-    const distPage = new DistribucionPage(page);
-    await distPage.goto();
+    await distribucionPage.goto();
+  });
 
-    const resp = await distPage.distribuir('Champú vegano', 'Sede A', 5, 'TEST-F4-01');
+  test('F4-CP-01 - Traslado valido parcial (Q=5 a Sede A)', async ({ distribucionPage }) => {
+    const resp = await distribucionPage.distribuir('Champú vegano', 'Sede A', 5, 'TEST-F4-01');
     expect(resp.status()).toBe(201);
 
     const snap = await getStocksSnapshot();
@@ -16,12 +16,8 @@ test.describe('F4 - Traslado de Productos a Sedes (TD + VL)', () => {
     expect(snap.sedes['Sede A']).toBe(5);
   });
 
-  test('F4-CP-02 - Limite superior exacto de stock (Q=20 a Sede A)', async ({ page }) => {
-    await resetBaseline({ invCentral: 20 });
-    const distPage = new DistribucionPage(page);
-    await distPage.goto();
-
-    const resp = await distPage.distribuir('Champú vegano', 'Sede A', 20, 'TEST-F4-02');
+  test('F4-CP-02 - Limite superior exacto de stock (Q=20 a Sede A)', async ({ distribucionPage }) => {
+    const resp = await distribucionPage.distribuir('Champú vegano', 'Sede A', 20, 'TEST-F4-02');
     expect(resp.status()).toBe(201);
 
     const snap = await getStocksSnapshot();
@@ -29,29 +25,21 @@ test.describe('F4 - Traslado de Productos a Sedes (TD + VL)', () => {
     expect(snap.sedes['Sede A']).toBe(20);
   });
 
-  test('F4-CP-03 - Excede stock central por 1 unidad (Q=21)', async ({ page }) => {
-    await resetBaseline({ invCentral: 20 });
-    const distPage = new DistribucionPage(page);
-    await distPage.goto();
-
-    await distPage.llenarFormulario('Champú vegano', 'Sede A', 21, 'TEST-F4-03');
-    await distPage.distribuirBtn.click();
-    await expect(distPage.errorBanner).toContainText('Stock insuficiente en central');
+  test('F4-CP-03 - Excede stock central por 1 unidad (Q=21)', async ({ distribucionPage }) => {
+    await distribucionPage.llenarFormulario('Champú vegano', 'Sede A', 21, 'TEST-F4-03');
+    await distribucionPage.click(distribucionPage.distribuirBtn);
+    await expect(distribucionPage.errorBanner).toContainText('Stock insuficiente en central');
 
     const snap = await getStocksSnapshot();
     expect(snap.central['Champú vegano']).toBe(20);
     expect(snap.sedes['Sede A'] ?? 0).toBe(0);
   });
 
-  test('F4-CP-05 - Suma acumulada al saldo previo de Sede B (3 + 4 = 7)', async ({ page }) => {
-    await resetBaseline({ invCentral: 20 });
-    const distPage = new DistribucionPage(page);
-    await distPage.goto();
-
-    const resp1 = await distPage.distribuir('Champú vegano', 'Sede B', 3, 'TEST-F4-05-A');
+  test('F4-CP-05 - Suma acumulada al saldo previo de Sede B (3 + 4 = 7)', async ({ distribucionPage, page }) => {
+    const resp1 = await distribucionPage.distribuir('Champú vegano', 'Sede B', 3, 'TEST-F4-05-A');
     expect(resp1.status()).toBe(201);
 
-    const resp2 = await distPage.distribuir('Champú vegano', 'Sede B', 4, 'TEST-F4-05-B');
+    const resp2 = await distribucionPage.distribuir('Champú vegano', 'Sede B', 4, 'TEST-F4-05-B');
     expect(resp2.status()).toBe(201);
 
     const snap = await getStocksSnapshot();
@@ -69,12 +57,8 @@ test.describe('F4 - Traslado de Productos a Sedes (TD + VL)', () => {
   ];
 
   for (const tc of invalidDistCases) {
-    test(`${tc.id} - ${tc.title}`, async ({ page }) => {
-      await resetBaseline({ invCentral: 20 });
-      const distPage = new DistribucionPage(page);
-      await distPage.goto();
-
-      const { isHtml5Valid, apiCalled } = await distPage.intentarDistribuirInvalido(
+    test(`${tc.id} - ${tc.title}`, async ({ distribucionPage }) => {
+      const { isHtml5Valid, apiCalled } = await distribucionPage.intentarDistribuirInvalido(
         'Champú vegano',
         'Sede A',
         tc.q,

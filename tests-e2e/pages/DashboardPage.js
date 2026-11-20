@@ -1,10 +1,8 @@
-export class DashboardPage {
-  constructor(page) {
-    this.page = page;
-    this.alertaMateriaPanel = page.locator('.panel', { hasText: 'Alerta Materia Prima' });
-  }
+import { BasePage } from './BasePage.js';
 
-  async goto() {
-    await this.page.goto('/');
+export class DashboardPage extends BasePage {
+  constructor(page) {
+    super(page, '/');
+    this.alertaMateriaPanel = page.locator('.panel', { hasText: 'Alerta Materia Prima' });
   }
 }

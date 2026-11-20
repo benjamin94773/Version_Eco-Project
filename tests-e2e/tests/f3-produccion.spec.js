@@ -1,7 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/test.fixture.js';
 import { resetBaseline, getStocksSnapshot } from '../helpers/db.js';
-import { ProduccionPage } from '../pages/ProduccionPage.js';
-import { DashboardPage } from '../pages/DashboardPage.js';
 
 test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
   const aoCases = [
@@ -83,16 +81,12 @@ test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
   ];
 
   for (const tc of aoCases) {
-    test(`${tc.id} - ${tc.title}`, async ({ page }) => {
-      // Arrange
+    test(`${tc.id} - ${tc.title}`, async ({ produccionPage, dashboardPage }) => {
       await resetBaseline({ ...tc.initial, invCentral: 0 });
-      const produccionPage = new ProduccionPage(page);
       await produccionPage.goto();
 
-      // Act
       const resp = await produccionPage.registrarProduccion('Champú vegano', tc.q, `Lote ${tc.id}`);
 
-      // Assert (HTTP + UI)
       if (tc.shouldSucceed) {
         expect(resp.status()).toBe(201);
         await expect(produccionPage.errorBanner).toHaveCount(0);
@@ -102,22 +96,19 @@ test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
         await expect(produccionPage.errorBanner).toContainText('Stock insuficiente');
       }
 
-      // Assert (Persistencia PostgreSQL)
       const snap = await getStocksSnapshot();
       expect(snap.materias['Aloe vera']).toBeCloseTo(tc.expected.A, 3);
       expect(snap.materias['Aceite de coco']).toBeCloseTo(tc.expected.B, 3);
       expect(snap.materias['Romero']).toBeCloseTo(tc.expected.C, 3);
       expect(snap.central['Champú vegano']).toBe(tc.expected.central);
 
-      // Assert (Alertas Dashboard)
       if (tc.shouldSucceed) {
-        const dashboard = new DashboardPage(page);
-        await dashboard.goto();
+        await dashboardPage.goto();
         if (tc.expectedAlerts.length === 0) {
-          await expect(dashboard.alertaMateriaPanel).toContainText('Sin alertas');
+          await expect(dashboardPage.alertaMateriaPanel).toContainText('Sin alertas');
         } else {
           for (const ing of tc.expectedAlerts) {
-            await expect(dashboard.alertaMateriaPanel).toContainText(ing);
+            await expect(dashboardPage.alertaMateriaPanel).toContainText(ing);
           }
         }
       }
@@ -131,9 +122,8 @@ test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
   ];
 
   for (const tc of invalidQuantityCases) {
-    test(`${tc.id} - ${tc.title}`, async ({ page }) => {
+    test(`${tc.id} - ${tc.title}`, async ({ produccionPage }) => {
       await resetBaseline({ stockA: 10, stockB: 7, stockC: 6, invCentral: 0 });
-      const produccionPage = new ProduccionPage(page);
       await produccionPage.goto();
 
       const { isHtml5Valid, apiCalled } = await produccionPage.intentarEnviarCantidadInvalida('Champú vegano', tc.q);

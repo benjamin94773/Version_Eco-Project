@@ -64,11 +64,11 @@
 
 ### Preparación previa (antes de subir a exponer)
 1. Abrir **VS Code** en la carpeta del proyecto con estas **5 pestañas abiertas** en orden:
-   - Pestaña 1: `tests-e2e/playwright.config.js`
-   - Pestaña 2: `tests-e2e/pages/ProduccionPage.js` *(Patrón Page Object Model)*
-   - Pestaña 3: `tests-e2e/helpers/db.js` *(Patrón Test Data Builder)*
-   - Pestaña 4: `tests-e2e/tests/f3-produccion.spec.js`
-   - Pestaña 5: `tests-e2e/tests/f2-formulas.spec.js`
+   - Pestaña 1: `tests-e2e/pages/BasePage.js` *(Clase padre POM: `goto`, `fill`, `click`)*
+   - Pestaña 2: `tests-e2e/pages/ProduccionPage.js` *(`extends BasePage` -- Page Object Model)*
+   - Pestaña 3: `tests-e2e/fixtures/test.fixture.js` *(Inyección automática de páginas -- sin `new` repetitivo)*
+   - Pestaña 4: `tests-e2e/helpers/db.js` *(Patrón Test Data Builder)*
+   - Pestaña 5: `tests-e2e/tests/f3-produccion.spec.js` y `f1-materias-primas.spec.js`
 2. Abrir la **Terminal integrada** en VS Code ubicada dentro de `tests-e2e`:
    ```powershell
    cd tests-e2e
@@ -79,25 +79,25 @@
 
 ### Parte A: Tour de Código en VS Code (Mostrar y Comentar — 2 min)
 
-#### 1. Mostrar `tests-e2e/playwright.config.js` (Líneas 10 a 47)
-*Qué señalar con el mouse:* `workers: 1`, `channel: 'chrome'`, `screenshot: 'only-on-failure'`, y `webServer`.
-> **Qué decir:** *"Aquí en `playwright.config.js` configuramos tres cosas clave: `workers: 1` para correr en serie y no corromper la base de datos entre tests; `screenshot: 'only-on-failure'` y `trace: 'retain-on-failure'` para guardar evidencias automáticas solo cuando un caso falla; y `webServer`, que levanta automáticamente Backend y Frontend si no están encendidos."*
+#### 1. Mostrar `tests-e2e/pages/BasePage.js` y `ProduccionPage.js` (**Herencia + Page Object Model**)
+*Qué señalar con el mouse:* `export class BasePage` (`goto`, `fill`, `click`), y en `ProduccionPage.js`: `export class ProduccionPage extends BasePage`.
+> **Qué decir:** *"Igual que el diseño profesional en capas, creamos una clase padre `BasePage.js` con los métodos comunes (`goto`, `fill`, `click` con espera de visibilidad). Cada pantalla como `ProduccionPage` hereda con `extends BasePage`, define su ruta `/produccion` y encapsula sus propios selectores DOM. Si cambia un botón en React, solo se edita aquí."*
 
-#### 2. Mostrar `tests-e2e/pages/ProduccionPage.js` (Todo el archivo — **Page Object Model**)
-*Qué señalar:* El constructor con los localizadores (`this.productoSelect`, `this.cantidadInput`, `this.submitBtn`) y los métodos `registrarProduccion()` / `intentarEnviarCantidadInvalida()`.
-> **Qué decir:** *"Siguiendo la recomendación de aplicar **Page Object Model (POM)**, creamos la carpeta `pages/` con cinco clases —una por cada vista React—. En `ProduccionPage.js` encapsulamos todos los selectores DOM y acciones del módulo. Así, si mañana cambia el texto de un botón o un selector en el Frontend, solo lo actualizamos aquí en un único lugar sin tocar los 29 tests."*
+#### 2. Mostrar `tests-e2e/fixtures/test.fixture.js` y `f1-materias-primas.spec.js` (**Fixtures + `beforeEach` = cero `new` repetitivo**)
+*Qué señalar:* `base.extend({ mpPage: ... })` en `test.fixture.js`, y en `f1-materias-primas.spec.js` el `test.beforeEach` y `async ({ mpPage }) =>`.
+> **Qué decir:** *"Para evitar instanciar `new MateriasPrimasPage(page)` y llamar `goto()` en cada caso de prueba, implementamos **Custom Fixtures** de Playwright en `test.fixture.js` junto con `test.beforeEach`. Así, cada caso recibe directamente `{ mpPage }` ya listo y ubicado en la pantalla, quedando el test súper limpio en solo unas líneas de negocio."*
 
 #### 3. Mostrar `tests-e2e/helpers/db.js` (Líneas 20 a 60 — **Test Data Builder**)
 *Qué señalar:* La función `resetBaseline(...)` y el `TRUNCATE TABLE ... RESTART IDENTITY CASCADE`.
 > **Qué decir:** *"Este archivo aplica el patrón Test Data Builder y resuelve nuestro mayor reto de la Entrega 1: en el Arreglo Ortogonal $L_9$ cada caso necesita stocks iniciales distintos (por ejemplo `A=17.5, B=5, C=2.5`). En vez de cambiarlos a mano, `resetBaseline()` limpia e inserta en PostgreSQL los datos exactos antes de cada prueba en 20 milisegundos."*
 
-#### 4. Mostrar `tests-e2e/tests/f3-produccion.spec.js` (Líneas 83 a 135)
-*Qué señalar:* El bucle `for (const tc of aoCases)`, `new ProduccionPage(page)`, `registrarProduccion(...)`, `getStocksSnapshot()` y `new DashboardPage(page)`.
-> **Qué decir:** *"Gracias al Page Object Model, miren lo limpio y legible que queda `f3-produccion.spec.js`: aplicando **Data-Driven Testing** y el patrón **Arrange-Act-Assert**, parametrizamos las 9 corridas de Taguchi $L_9$; el test solo llama `produccionPage.registrarProduccion(...)`, valida el HTTP 201 o 400 de rollback, confirma en PostgreSQL que ningún insumo tuvo descuento parcial y verifica con `DashboardPage` las alertas rojas."*
+#### 4. Mostrar `tests-e2e/tests/f3-produccion.spec.js` (**Data-Driven + Arrange-Act-Assert**)
+*Qué señalar:* El bucle `for (const tc of aoCases)`, `async ({ produccionPage, dashboardPage })`, `getStocksSnapshot()`.
+> **Qué decir:** *"Gracias a POM + Fixtures + Data-Driven Testing, las 9 corridas de Taguchi $L_9$ corren con el mismo bloque: el test solo llama `produccionPage.registrarProduccion(...)`, valida el HTTP 201 o 400 de rollback, confirma en PostgreSQL que ningún insumo tuvo descuento parcial y verifica con `dashboardPage` las alertas rojas."*
 
-#### 5. Mostrar `tests-e2e/tests/f2-formulas.spec.js` (Líneas 5 a 46)
-*Qué señalar:* `new ProductosPage(page)`, `guardarFormulaEsperandoDialogo(prodId)` y la aserción de `F2-CP-02`.
-> **Qué decir:** *"En `ProductosPage` encapsulamos incluso el manejo paralelo de las alertas nativas (`window.alert`) esperando en paralelo la respuesta HTTP y el evento `dialog`. Y en `F2-CP-02` afirmamos que al intentar guardar una fórmula vacía sin ingredientes, la API debe responder `>= 400` según la regla de negocio RN-08... y ya verán en vivo qué pasa."*
+#### 5. Mostrar `tests-e2e/tests/f2-formulas.spec.js` (Líneas 1 a 45)
+*Qué señalar:* `test.beforeEach` abriendo la fórmula del champú y la aserción de `F2-CP-02`.
+> **Qué decir:** *"En `f2-formulas.spec.js`, el `beforeEach` deja el formulario ya abierto sobre Champú vegano y en `F2-CP-02` afirmamos que al guardar una fórmula vacía sin ingredientes la API debe responder `>= 400` según RN-08... y ya verán en vivo qué pasa."*
 
 ---
 

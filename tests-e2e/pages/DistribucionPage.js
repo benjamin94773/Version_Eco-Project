@@ -1,6 +1,8 @@
-export class DistribucionPage {
+import { BasePage } from './BasePage.js';
+
+export class DistribucionPage extends BasePage {
   constructor(page) {
-    this.page = page;
+    super(page, '/distribucion');
     this.productoSelect = page.locator('form select').nth(0);
     this.sedeSelect = page.locator('form select').nth(1);
     this.cantidadInput = page.locator('form input[type="number"]');
@@ -9,15 +11,11 @@ export class DistribucionPage {
     this.errorBanner = page.locator('.error-msg');
   }
 
-  async goto() {
-    await this.page.goto('/distribucion');
-  }
-
   async llenarFormulario(producto, sede, cantidad, referencia) {
     await this.productoSelect.selectOption({ label: producto });
     await this.sedeSelect.selectOption({ label: sede });
-    await this.cantidadInput.fill(String(cantidad));
-    await this.referenciaInput.fill(referencia);
+    await this.fill(this.cantidadInput, cantidad);
+    await this.fill(this.referenciaInput, referencia);
   }
 
   async distribuir(producto, sede, cantidad, referencia) {
@@ -25,7 +23,7 @@ export class DistribucionPage {
     const respPromise = this.page.waitForResponse(
       (res) => res.url().includes('/api/inventario/distribuciones') && res.request().method() === 'POST'
     );
-    await this.distribuirBtn.click();
+    await this.click(this.distribuirBtn);
     return await respPromise;
   }
 
@@ -39,7 +37,7 @@ export class DistribucionPage {
       }
     });
 
-    await this.distribuirBtn.click();
+    await this.click(this.distribuirBtn);
     const isHtml5Valid = await this.cantidadInput.evaluate((el) => el.checkValidity());
     return { isHtml5Valid, apiCalled };
   }

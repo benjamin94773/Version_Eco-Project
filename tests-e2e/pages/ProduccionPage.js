@@ -1,6 +1,8 @@
-export class ProduccionPage {
+import { BasePage } from './BasePage.js';
+
+export class ProduccionPage extends BasePage {
   constructor(page) {
-    this.page = page;
+    super(page, '/produccion');
     this.productoSelect = page.locator('form select');
     this.cantidadInput = page.locator('form input[type="number"]');
     this.observacionInput = page.locator('form input[placeholder*="Lote"]');
@@ -9,27 +11,23 @@ export class ProduccionPage {
     this.firstRow = page.locator('table tbody tr').first();
   }
 
-  async goto() {
-    await this.page.goto('/produccion');
-  }
-
   async registrarProduccion(productoNombre, cantidad, observacion) {
     await this.productoSelect.selectOption({ label: productoNombre });
-    await this.cantidadInput.fill(String(cantidad));
+    await this.fill(this.cantidadInput, cantidad);
     if (observacion) {
-      await this.observacionInput.fill(observacion);
+      await this.fill(this.observacionInput, observacion);
     }
 
     const respPromise = this.page.waitForResponse(
       (res) => res.url().includes('/api/produccion') && res.request().method() === 'POST'
     );
-    await this.submitBtn.click();
+    await this.click(this.submitBtn);
     return await respPromise;
   }
 
   async intentarEnviarCantidadInvalida(productoNombre, cantidad) {
     await this.productoSelect.selectOption({ label: productoNombre });
-    await this.cantidadInput.fill(String(cantidad));
+    await this.fill(this.cantidadInput, cantidad);
 
     let apiCalled = false;
     this.page.on('request', (req) => {
@@ -38,7 +36,7 @@ export class ProduccionPage {
       }
     });
 
-    await this.submitBtn.click();
+    await this.click(this.submitBtn);
     const isHtml5Valid = await this.cantidadInput.evaluate((el) => el.checkValidity());
     return { isHtml5Valid, apiCalled };
   }

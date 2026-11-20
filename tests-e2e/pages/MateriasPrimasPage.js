@@ -1,6 +1,8 @@
-export class MateriasPrimasPage {
+import { BasePage } from './BasePage.js';
+
+export class MateriasPrimasPage extends BasePage {
   constructor(page) {
-    this.page = page;
+    super(page, '/materias-primas');
     this.nuevaMateriaBtn = page.getByRole('button', { name: 'Nueva Materia Prima' });
     this.nombreInput = page.locator('form input[placeholder*="Aloe Vera"]');
     this.unidadSelect = page.locator('form select');
@@ -11,16 +13,12 @@ export class MateriasPrimasPage {
     this.errorBanner = page.locator('.error-msg');
   }
 
-  async goto() {
-    await this.page.goto('/materias-primas');
-  }
-
   async crearMateriaPrima({ nombre, unidad = 'kg', cantidad, minimo = '1' }) {
-    await this.nuevaMateriaBtn.click();
-    await this.nombreInput.fill(nombre);
+    await this.click(this.nuevaMateriaBtn);
+    await this.fill(this.nombreInput, nombre);
     await this.unidadSelect.selectOption(unidad);
-    await this.cantidadInput.fill(String(cantidad));
-    await this.minimoInput.fill(String(minimo));
+    await this.fill(this.cantidadInput, cantidad);
+    await this.fill(this.minimoInput, minimo);
 
     const respPromise = this.page
       .waitForResponse(
@@ -29,7 +27,7 @@ export class MateriasPrimasPage {
       )
       .catch(() => null);
 
-    await this.crearBtn.click();
+    await this.click(this.crearBtn);
     return await respPromise;
   }
 }
