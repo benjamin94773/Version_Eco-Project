@@ -54,7 +54,20 @@ Para ejecutar la validación automática de todos los 31 casos de prueba de caja
 
 ---
 
-### 3. Reiniciar la Base de Datos a Estado Limpio
+### 3. Suite de Pruebas Automatizadas E2E con Playwright (Entrega 2)
+Para ejecutar la suite real automatizada de **29 casos E2E** sobre Chrome + API + PostgreSQL y abrir el reporte HTML:
+
+```powershell
+cd tests-e2e
+npm install
+npm test
+npm run report
+```
+*(Para demostración visual con navegador abierto: `npx playwright test --headed`).*
+
+---
+
+### 4. Reiniciar la Base de Datos a Estado Limpio
 Para resetear por completo las tablas y volver a cargar los datos semilla (*seed*):
 
 ``powershell

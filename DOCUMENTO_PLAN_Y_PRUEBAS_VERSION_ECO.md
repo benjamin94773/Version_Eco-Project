@@ -8,8 +8,8 @@
 - Benjamin Ortiz  
 - Samuel Rueda  
 - Daniela Orobio  
-**Fecha de Entrega:** 21 de octubre de 2026  
-**Versión:** 2.0 (Consolidada con los 31 Casos de Prueba del Equipo)
+**Fecha de Entrega:** 27 de noviembre de 2026 (Entrega 2 y Final)  
+**Versión:** 3.0 (Consolidada con Estrategia de Automatización, Selección de Herramientas y Suite Playwright)
 
 ---
 
@@ -22,7 +22,7 @@
   - Benjamin Ortiz
   - Samuel Rueda
   - Daniela Orobio
-- **URL del Repositorio:** `https://github.com/Benjamin-Ortiz/Version_EcoProject`
+- **URL del Repositorio:** `https://github.com/benjamin94773/Version_Eco-Project`
 - **URL de la Aplicación:**
   - *Ambiente Local de Pruebas (SUT):* `http://localhost:5173` (Frontend Vite/React) y `http://localhost:4000/api` (Backend REST API).
   - *Ambiente Cloud de Despliegue:* Despliegue en plataforma Vercel con integración a base de datos PostgreSQL Serverless (Neon).
@@ -138,6 +138,14 @@ Siguiendo la selección del equipo, las cuatro funcionalidades identificadas con
 - Defectos en producción que afectan inventario (Mitigación: priorizar pruebas de producción y descuentos).
 - Cálculos incorrectos en recetas (Mitigación: contrastar fórmula con cantidades en BD).
 - Inventarios negativos (Mitigación: validación con restricciones `CHECK` en PostgreSQL).
+
+### 7.3. Estrategia de Automatización de Pruebas Funcionales (Actualización Entrega 2)
+Para la Entrega 2 se incorpora la estrategia formal de automatización E2E multicapa:
+1. **Validación Híbrida UI + Red HTTP + PostgreSQL:** Las pruebas interactúan en Google Chrome real contra React (`localhost:5173`), interceptan respuestas REST (`localhost:4000/api`) y verifican saldos ACID directamente en PostgreSQL 18.
+2. **Aislamiento Determinístico (`Test Data Sandboxing`):** Antes de cada prueba, `resetBaseline()` ejecuta `TRUNCATE ... RESTART IDENTITY CASCADE` y siembra los stocks exactos de ese caso en ~20 ms.
+3. **Ejecución Secuencial (`workers: 1`):** Previene condiciones de carrera sobre la base de datos compartida.
+4. **Sincronización Reactiva (`no sleep`):** Emplea auto-waiting nativo, `waitForResponse()` y `waitForEvent('dialog')`.
+5. **Evidencias Automáticas:** Capturas `.png`, trazas `trace.zip`, reporte HTML (`playwright-report`) y resultados JSON (`results.json`).
 
 ---
 
@@ -283,5 +291,58 @@ Para asegurar correspondencia con el diseño de caja negra (Taguchi $L_9$ y Tabl
 
 ---
 
-## 10. Conclusiones
-El sistema Version-Eco alcanza un **96.77% de aprobación** en sus pruebas funcionales de caja negra. La regla de mayor impacto crítico (atomicidad del consumo de fórmulas en producción) superó el 100% de las pruebas, validando la estabilidad e integridad del software para su entrada en operación.
+## 10. Selección y Evaluación de Herramientas de Automatización (Entrega 2)
+
+### 10.1. Evaluación Comparativa Ponderada
+| Criterio (Peso) | Playwright | Cypress | Selenium | Katalon | Postman |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| Compatibilidad Stack JS/React (20%) | 10 | 10 | 7 | 6 | 5 |
+| Validación HTML5 y `alert/confirm` (20%) | 10 | 7 | 8 | 7 | 0 |
+| Integración UI + API + BD (20%) | 10 | 8 | 7 | 7 | 4 |
+| Reportería HTML/JSON y Trazas (15%) | 10 | 8 | 5 | 8 | 7 |
+| Estabilidad *Auto-Wait* y Velocidad (15%) | 10 | 9 | 6 | 7 | 9 |
+| Costo / Open Source (10%) | 10 | 9 | 10 | 5 | 9 |
+| **Puntaje Ponderado Total** | **10.0** | **8.50** | **7.15** | **6.75** | **4.95** |
+
+### 10.2. Justificación de la Herramienta Seleccionada
+Se seleccionó **Playwright Test (`@playwright/test` v1.50)** junto con **`pg` (node-postgres)** por unificación con el stack ESM del proyecto, manejo nativo de `window.alert`/`checkValidity()`, interceptación HTTP (`waitForResponse`), arranque automático `webServer`, reportería HTML con evidencias y control transaccional de precondiciones en PostgreSQL.
+
+---
+
+## 11. Selección e Implementación de Casos Automatizados
+
+- **Seleccionados (29 de 31 — 93.55%):** 100% de los casos de prioridad **Crítica** y **Alta**:
+  - **F3:** 12/12 (`F3-CP-01` a `F3-CP-12`)
+  - **F4:** 7/7 (`F4-CP-01` a `F4-CP-07`)
+  - **F1:** 6/8 (`F1-CP-01` a `F1-CP-06`)
+  - **F2:** 4/4 (`F2-CP-01` a `F2-CP-04`)
+- **Excluidos / Manuales (2 de 31):** `F1-CP-07` y `F1-CP-08` (prioridad **Media**, inspección visual de estilos en Dashboard y flujo destructivo con `window.confirm`).
+- **Implementación en el Repositorio:** Carpeta `tests-e2e/` (`playwright.config.js`, `helpers/db.js` y `tests/*.spec.js`).
+
+---
+
+## 12. Reporte de Ejecución Automatizada y Hallazgos Relevantes
+
+### 12.1. Consolidado Real de Ejecución (`npx playwright test`)
+- **Duración Total:** `28.5 s` (`28,500 ms`) en Google Chrome real (`workers: 1`).
+- **Total Ejecutados:** **29** | **Aprobados:** **27 (93.10%)** | **Fallidos:** **2 (6.90%)**.
+
+| Funcionalidad / Spec | Ejecutados | Aprobados | Fallidos | % Éxito |
+| :--- | :---: | :---: | :---: | :---: |
+| **F1: Materias Primas** (`f1-materias-primas.spec.js`) | 6 | 5 | 1 | **83.33%** |
+| **F2: Fórmulas** (`f2-formulas.spec.js`) | 4 | 3 | 1 | **75.00%** |
+| **F3: Producción** (`f3-produccion.spec.js`) | 12 | 12 | 0 | **100.00%** |
+| **F4: Distribución** (`f4-distribucion.spec.js`) | 7 | 7 | 0 | **100.00%** |
+| **TOTAL AUTOMATIZADOS** | **29** | **27** | **2** | **93.10%** |
+
+### 12.2. Hallazgos Relevantes y Defectos Descubiertos
+1. **DEF-02 (`F1-CP-05`, Violación de RN-04):** Al ingresar `50.01 kg` para `"Glicerina"`, el sistema no valida el tope de 50 unidades ni en frontend ni en backend/BD, retornando `HTTP 201` y persistiendo `50.01`.
+2. **DEF-03 (`F2-CP-02`, Violación de RN-08):** Al guardar una fórmula sin materias primas (`detalles: []`), el sistema retorna `HTTP 200` y muestra el diálogo `"Formula guardada"`, permitiendo recetas vacías.
+3. **Regresión Confirmada de DEF-01 (`F1-CP-03`):** El índice único `LOWER(TRIM(nombre))` en PostgreSQL rechazó `"aloe vera "` con `HTTP 409`.
+4. **Observación en `F1-CP-06` (`-1 kg`):** El input no tiene `min="0"` y el backend delega el rechazo al `CHECK` de PostgreSQL devolviendo `HTTP 500` en lugar de `400 Bad Request`.
+5. **Solidez de F3 y F4 (100%):** Las 12 pruebas de producción (Taguchi $L_9$ + R1) y 7 de traslado pasaron íntegras.
+
+---
+
+## 13. Conclusiones Finales
+La automatización con **Playwright + PostgreSQL** permitió validar 29 escenarios críticos E2E en 28.5 segundos, alcanzando **93.10% de aprobación** y descubriendo **dos defectos funcionales reales** (`DEF-02` y `DEF-03`) que no habían sido evidenciados en la fase manual de Entrega 1.

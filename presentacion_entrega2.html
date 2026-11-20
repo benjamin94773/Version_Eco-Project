@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Version-Eco — Presentación Entrega 2 y Final (Automatización)</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #273549;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-dark: #0284c7;
+      --green: #22c55e;
+      --green-bg: rgba(34, 197, 94, 0.14);
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.14);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.14);
+      --border: rgba(148, 163, 184, 0.18);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .deck {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 44px 72px;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      max-width: 1180px;
+      height: 100%;
+      max-height: 680px;
+      background: linear-gradient(145deg, #162235, #0f172a);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 40px 48px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+      flex-direction: column;
+      justify-content: space-between;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .slide.active { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+    }
+
+    .tag {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      font-weight: 700;
+      color: var(--primary);
+      background: rgba(56, 189, 248, 0.12);
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      white-space: nowrap;
+    }
+
+    h1 { font-size: 42px; line-height: 1.15; letter-spacing: -0.5px; }
+    h2 { font-size: 28px; color: #ffffff; font-weight: 700; }
+    h3 { font-size: 17px; color: var(--primary); margin-bottom: 8px; }
+    p, li { font-size: 15.5px; line-height: 1.48; color: #e2e8f0; }
+
+    .slide-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 16px;
+      overflow: hidden;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+    }
+
+    .card.green { border-left: 4px solid var(--green); background: linear-gradient(135deg, var(--green-bg), var(--surface)); }
+    .card.red { border-left: 4px solid var(--red); background: linear-gradient(135deg, var(--red-bg), var(--surface)); }
+    .card.amber { border-left: 4px solid var(--amber); background: linear-gradient(135deg, var(--amber-bg), var(--surface)); }
+    .card.blue { border-left: 4px solid var(--primary); }
+
+    .kpi-val {
+      font-size: 36px;
+      font-weight: 800;
+      margin: 4px 0;
+      display: block;
+    }
+
+    .kpi-label { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; }
+
+    ul { padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+    li strong { color: #ffffff; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      background: var(--surface);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--surface-2);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    .center { text-align: center; }
+
+    .bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .bar-name { width: 155px; font-weight: 600; font-size: 14.5px; }
+    .bar-track {
+      flex: 1;
+      height: 22px;
+      background: rgba(148, 163, 184, 0.12);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    code, pre {
+      font-family: 'Cascadia Code', Consolas, monospace;
+      background: #0b1220;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    code { padding: 2px 6px; font-size: 13.5px; color: #7dd3fc; }
+    pre { padding: 12px 14px; font-size: 13.5px; color: #e2e8f0; overflow-x: auto; line-height: 1.5; }
+
+    .badge-ok { background: var(--green-bg); color: #4ade80; padding: 3px 9px; border-radius: 999px; font-size: 12.5px; font-weight: 700; }
+    .badge-fail { background: var(--red-bg); color: #f87171; padding: 3px 9px; border-radius: 999px; font-size: 12.5px; font-weight: 700; }
+    .badge-warn { background: var(--amber-bg); color: #fbbf24; padding: 3px 9px; border-radius: 999px; font-size: 12.5px; font-weight: 700; }
+
+    .cover-center {
+      text-align: center;
+      align-items: center;
+      gap: 20px;
+    }
+    .cover-sub { font-size: 20px; color: var(--muted); max-width: 780px; }
+    .authors {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .author-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 14.5px;
+      font-weight: 600;
+    }
+
+    .controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: rgba(15, 23, 42, 0.94);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-group { display: flex; gap: 10px; align-items: center; }
+    button {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 600;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    button:hover:not(:disabled) { background: var(--surface-2); border-color: var(--primary); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .counter { font-size: 14px; color: var(--muted); font-weight: 600; }
+    .hint { font-size: 12.5px; color: var(--muted); }
+
+    @media print {
+      body { overflow: visible; height: auto; background: #fff; color: #000; }
+      .controls { display: none; }
+      .deck { display: block; padding: 0; }
+      .slide { display: flex !important; page-break-after: always; max-height: none; height: 95vh; box-shadow: none; margin: 0 auto 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<main class="deck">
+
+  <!-- SLIDE 1: PORTADA -->
+  <section class="slide active">
+    <div class="slide-header">
+      <span class="tag">Pontificia Universidad Javeriana Cali</span>
+      <span class="hint">Construcción de Software y Pruebas &bull; 27 de noviembre de 2026</span>
+    </div>
+    <div class="slide-body cover-center">
+      <span class="tag" style="font-size: 13px;">Segunda Entrega y Final &bull; Automatización de Pruebas Funcionales</span>
+      <h1>Estrategia, Automatización E2E y Resultados en <span style="color: var(--primary);">Version-Eco</span></h1>
+      <p class="cover-sub">
+        Evaluación de herramientas de mercado, automatización con <strong>Playwright + PostgreSQL</strong> sobre los casos diseñados con Arreglos Ortogonales, Tablas de Decisión y Valores Límite.
+      </p>
+      <div class="authors">
+        <span class="author-pill">Benjamin Ortiz</span>
+        <span class="author-pill">Samuel Rueda</span>
+        <span class="author-pill">Harold Guerrero</span>
+        <span class="author-pill">Daniela Orobio</span>
+      </div>
+    </div>
+    <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--muted);">
+      <span>Sistema Bajo Prueba: Inventario y Producción Cosmética Vegana</span>
+      <span>Repositorio: github.com/benjamin94773/Version_Eco-Project</span>
+    </div>
+  </section>
+
+  <!-- SLIDE 2: CONTEXTO DEL SUT -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>1. Arquitectura del Software Bajo Prueba (SUT)</h2>
+      <span class="tag">Contexto Técnico</span>
+    </div>
+    <div class="slide-body">
+      <div class="grid-3">
+        <div class="card blue">
+          <h3>Capa 1: Frontend SPA</h3>
+          <p><strong>React 18 + Vite</strong> en <code>localhost:5173</code>.</p>
+          <ul style="margin-top:8px;">
+            <li>Validación nativa HTML5 (<code>min</code>, <code>required</code>).</li>
+            <li>Diálogos nativos (<code>alert</code>, <code>confirm</code>).</li>
+            <li>Semáforo de alertas en Dashboard.</li>
+          </ul>
+        </div>
+        <div class="card blue">
+          <h3>Capa 2: Backend API</h3>
+          <p><strong>Node.js 24 + Express 4</strong> en <code>localhost:4000/api</code>.</p>
+          <ul style="margin-top:8px;">
+            <li>Endpoints REST JSON semánticos.</li>
+            <li>Códigos <code>200, 201, 400, 409, 500</code>.</li>
+            <li>Generador de recetas PDFKit.</li>
+          </ul>
+        </div>
+        <div class="card green">
+          <h3>Capa 3: Base de Datos</h3>
+          <p><strong>PostgreSQL 18</strong> (<code>version_eco_db</code>).</p>
+          <ul style="margin-top:8px;">
+            <li>Procedimientos PL/pgSQL atómicos.</li>
+            <li>Restricciones <code>CHECK</code> e índice <code>LOWER(TRIM)</code>.</li>
+            <li>Vistas reactivas de stock mínimo.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Cadena de Valor Funcional Evaluada (4 Funcionalidades No-CRUD)</h3>
+        <div class="grid-4" style="margin-top: 8px;">
+          <div><strong>F1: Materias Primas</strong><br><span style="color:var(--muted); font-size:13.5px;">Unicidad, tope 50 (RN-04), historial, no borrar si hay receta.</span></div>
+          <div><strong>F2: Fórmulas (BOM)</strong><br><span style="color:var(--muted); font-size:13.5px;">Mínimo 1 insumo (RN-08), sin repetidos (RN-14), cantidad &gt; 0.</span></div>
+          <div><strong>F3: Producción Central</strong><br><span style="color:var(--muted); font-size:13.5px;">Descuento atómico PL/pgSQL (RN-10), rollback y alertas.</span></div>
+          <div><strong>F4: Traslados a Sedes</strong><br><span style="color:var(--muted); font-size:13.5px;">Solo desde Central, control de límite stock, suma acumulativa.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3: ACTUALIZACION DEL PLAN DE PRUEBAS -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>2. Actualización del Plan Maestro de Pruebas (PMP)</h2>
+      <span class="tag">Estrategia de Automatización</span>
+    </div>
+    <div class="slide-body">
+      <p>Se integró la <strong>Estrategia de Automatización Funcional E2E Multicapa</strong> dentro de la Sección 7.4 del Plan de Pruebas para asegurar regresión determinística:</p>
+      <div class="grid-2">
+        <div class="card blue">
+          <h3>1. Validación Multicapa Real (Sin Mocks)</h3>
+          <ul>
+            <li><strong>Interfaz:</strong> Acciones reales de usuario en Chrome sobre React.</li>
+            <li><strong>Red HTTP:</strong> Interceptación con <code>waitForResponse()</code> para validar el código de estado devuelto por Express.</li>
+            <li><strong>Base de Datos:</strong> Consulta directa a PostgreSQL (<code>getStocksSnapshot()</code>) tras cada operación para certificar persistencia ACID.</li>
+          </ul>
+        </div>
+        <div class="card green">
+          <h3>2. Aislamiento Determinístico (Sandboxing)</h3>
+          <ul>
+            <li><strong>Reto del $L_9$:</strong> Producción consume stock y traslados dependen de Central.</li>
+            <li><strong>Solución:</strong> Antes de cada test, <code>resetBaseline()</code> ejecuta <code>TRUNCATE ... RESTART IDENTITY CASCADE</code> y siembra las precondiciones exactas en <strong>~20 ms</strong>.</li>
+            <li><strong>Orden controlado:</strong> <code>workers: 1</code> evita colisiones sobre la BD.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>3. Sincronización Reactiva</h3>
+          <p>Cero esperas fijas (<code>no sleep</code>). Auto-waiting nativo de selectores, <code>checkValidity()</code> para bloqueos HTML5 y <code>waitForEvent('dialog')</code> para alertas React.</p>
+        </div>
+        <div class="card">
+          <h3>4. Gestión Automática de Evidencias</h3>
+          <p>Captura automática de <strong>pantallazos PNG</strong>, contexto DOM y <strong>trazas interactivas (<code>trace.zip</code>)</strong> ante cualquier falla, consolidadas en Reporte HTML y JSON.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 4: EVALUACION DE HERRAMIENTAS -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>3. Evaluación Comparativa de Herramientas</h2>
+      <span class="tag">Mercado vs Version-Eco</span>
+    </div>
+    <div class="slide-body">
+      <div class="grid-2" style="align-items: center;">
+        <div>
+          <table>
+            <thead>
+              <tr>
+                <th>Herramienta</th>
+                <th class="center">Stack JS</th>
+                <th class="center">HTML5 / Alert</th>
+                <th class="center">UI+API+BD</th>
+                <th class="center">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Playwright</strong></td>
+                <td class="center">10</td>
+                <td class="center">10</td>
+                <td class="center">10</td>
+                <td class="center"><span class="badge-ok">10.0 / 10</span></td>
+              </tr>
+              <tr>
+                <td>Cypress</td>
+                <td class="center">10</td>
+                <td class="center">7</td>
+                <td class="center">8</td>
+                <td class="center">8.50 / 10</td>
+              </tr>
+              <tr>
+                <td>Selenium WebDriver</td>
+                <td class="center">7</td>
+                <td class="center">8</td>
+                <td class="center">7</td>
+                <td class="center">7.15 / 10</td>
+              </tr>
+              <tr>
+                <td>Katalon Studio</td>
+                <td class="center">6</td>
+                <td class="center">7</td>
+                <td class="center">7</td>
+                <td class="center">6.75 / 10</td>
+              </tr>
+              <tr>
+                <td>Postman / Newman</td>
+                <td class="center">5</td>
+                <td class="center">0</td>
+                <td class="center">4</td>
+                <td class="center">4.95 / 10</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>Puntaje Ponderado Global (6 Criterios)</h3>
+          <div style="margin-top:12px;">
+            <div class="bar-wrap"><span class="bar-name">Playwright</span><div class="bar-track"><div class="bar-fill" style="width:100%; background:var(--green);">10.0</div></div></div>
+            <div class="bar-wrap"><span class="bar-name">Cypress</span><div class="bar-track"><div class="bar-fill" style="width:85%; background:var(--primary);">8.50</div></div></div>
+            <div class="bar-wrap"><span class="bar-name">Selenium</span><div class="bar-track"><div class="bar-fill" style="width:71.5%; background:#60a5fa;">7.15</div></div></div>
+            <div class="bar-wrap"><span class="bar-name">Katalon</span><div class="bar-track"><div class="bar-fill" style="width:67.5%; background:var(--amber);">6.75</div></div></div>
+            <div class="bar-wrap"><span class="bar-name">Postman (Solo API)</span><div class="bar-track"><div class="bar-fill" style="width:49.5%; background:var(--muted);">4.95</div></div></div>
+          </div>
+          <p style="font-size:13.5px; color:var(--muted); margin-top:8px;">Criterios ponderados: Stack React/JS (20%), HTML5/Alertas (20%), UI+API+BD (20%), Reportería (15%), Auto-wait (15%), Costo Open Source (10%).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5: JUSTIFICACION PLAYWRIGHT -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>4. ¿Por qué Playwright + Driver <code>pg</code>? (Socialización)</h2>
+      <span class="tag">Decisión Técnica</span>
+    </div>
+    <div class="slide-body">
+      <div class="grid-2">
+        <div class="card green">
+          <h3>Ventajas Clave Frente a Competidores</h3>
+          <ul>
+            <li><strong>Vs. Postman/Newman:</strong> Postman no abre navegador; no podría probar bloqueos HTML5 (<code>F3-CP-10..12</code>) ni alertas visuales en el Dashboard.</li>
+            <li><strong>Vs. Selenium:</strong> Sin gestión manual de drivers ni <code>sleep()</code> frágiles; Playwright trae <em>auto-waiting</em> y reporte HTML nativo.</li>
+            <li><strong>Vs. Cypress:</strong> Manejo nativo limpio de <code>window.alert()</code> (necesario en F2 Fórmulas), validación directa de <code>checkValidity()</code> y menor consumo en Windows.</li>
+            <li><strong>Vs. Katalon:</strong> 100% Open Source y escrito en JavaScript ESM (mismo lenguaje del equipo), sin licencias ni Groovy externo.</li>
+          </ul>
+        </div>
+        <div class="card blue">
+          <h3>Arquitectura de la Suite (<code>tests-e2e/</code>)</h3>
+          <pre>tests-e2e/
+├── playwright.config.js  # Chrome + webServer auto
+├── helpers/
+│   └── db.js             # resetBaseline() via pg
+└── tests/
+    ├── f1-materias-primas.spec.js  (6 casos)
+    ├── f2-formulas.spec.js         (4 casos)
+    ├── f3-produccion.spec.js       (12 casos)
+    └── f4-distribucion.spec.js     (7 casos)</pre>
+          <p style="margin-top:10px; font-size:14px;">Con un solo comando (<code>npm test</code>), Playwright verifica o levanta el Backend (4000) y Frontend (5173), corre los 29 escenarios y genera el reporte HTML.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 6: SELECCION DE CASOS -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>5. Selección de Casos a Automatizar (29 de 31)</h2>
+      <span class="tag">Criterios ISTQB</span>
+    </div>
+    <div class="slide-body">
+      <div class="grid-2">
+        <div>
+          <table>
+            <thead>
+              <tr>
+                <th>Módulo</th>
+                <th class="center">Diseño E1</th>
+                <th class="center">Automat.</th>
+                <th class="center">Manual</th>
+                <th class="center">%</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>F3: Producción</strong> (AO $L_9$ + R1)</td><td class="center">12</td><td class="center">12</td><td class="center">0</td><td class="center"><strong>100%</strong></td></tr>
+              <tr><td><strong>F4: Traslados a Sedes</strong> (TD + VL)</td><td class="center">7</td><td class="center">7</td><td class="center">0</td><td class="center"><strong>100%</strong></td></tr>
+              <tr><td><strong>F1: Materias Primas</strong> (TD + VL)</td><td class="center">8</td><td class="center">6</td><td class="center">2</td><td class="center">75%</td></tr>
+              <tr><td><strong>F2: Fórmulas</strong> (TD)</td><td class="center">4</td><td class="center">4</td><td class="center">0</td><td class="center"><strong>100%</strong></td></tr>
+              <tr><td><strong>TOTAL</strong></td><td class="center"><strong>31</strong></td><td class="center"><strong>29</strong></td><td class="center"><strong>2</strong></td><td class="center"><span class="badge-ok">93.55%</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>Justificación de Selección (ROI y Riesgo)</h3>
+          <ul>
+            <li><strong>Seleccionados (29 casos — 100% Crítica y Alta):</strong>
+              <br>Alto ROI: las 9 corridas combinatorias Taguchi $L_9$, valores límite ($50$ vs $50.01$, $20$ vs $21$), atomicidad transaccional y prueba de regresión de <code>DEF-01</code> (<code>F1-CP-03</code>).</li>
+            <li><strong>Mantenidos Manuales (2 casos — Prioridad Media):</strong>
+              <br><code>F1-CP-07</code> (inspección visual estética de alertas de stock 0) y <code>F1-CP-08</code> (interacción humana en diálogo modal destructivo <code>window.confirm</code> con fórmula activa).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 7: RESULTADOS REALES -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>6. Reporte Real de Ejecución Automatizada</h2>
+      <span class="tag">Playwright HTML &amp; JSON</span>
+    </div>
+    <div class="slide-body">
+      <div class="grid-4">
+        <div class="card blue"><span class="kpi-label">Casos Ejecutados</span><span class="kpi-val" style="color:var(--primary);">29</span><span>100% de lo seleccionado</span></div>
+        <div class="card green"><span class="kpi-label">Aprobados</span><span class="kpi-val" style="color:var(--green);">27</span><span><strong>93.10%</strong> tasa de éxito</span></div>
+        <div class="card red"><span class="kpi-label">Fallidos (Bugs Reales)</span><span class="kpi-val" style="color:var(--red);">2</span><span><strong>6.90%</strong> violaciones RN</span></div>
+        <div class="card"><span class="kpi-label">Duración Total</span><span class="kpi-val">28.5 s</span><span>Chrome real + BD</span></div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Funcionalidad / Spec</th>
+            <th class="center">Ejecutados</th>
+            <th class="center">Aprobados</th>
+            <th class="center">Fallidos</th>
+            <th class="center">% Éxito</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>F3: Producción</strong> (<code>f3-produccion.spec.js</code>)</td>
+            <td class="center">12</td><td class="center">12</td><td class="center">0</td><td class="center">100.0%</td>
+            <td><span class="badge-ok">Sin fallos</span></td>
+          </tr>
+          <tr>
+            <td><strong>F4: Distribución</strong> (<code>f4-distribucion.spec.js</code>)</td>
+            <td class="center">7</td><td class="center">7</td><td class="center">0</td><td class="center">100.0%</td>
+            <td><span class="badge-ok">Sin fallos</span></td>
+          </tr>
+          <tr>
+            <td><strong>F1: Materias Primas</strong> (<code>f1-materias-primas.spec.js</code>)</td>
+            <td class="center">6</td><td class="center">5</td><td class="center">1</td><td class="center">83.33%</td>
+            <td><span class="badge-fail">Falla F1-CP-05 (DEF-02)</span></td>
+          </tr>
+          <tr>
+            <td><strong>F2: Fórmulas</strong> (<code>f2-formulas.spec.js</code>)</td>
+            <td class="center">4</td><td class="center">3</td><td class="center">1</td><td class="center">75.00%</td>
+            <td><span class="badge-fail">Falla F2-CP-02 (DEF-03)</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- SLIDE 8: HALLAZGOS Y DEFECTOS -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>7. Hallazgos Relevantes y Defectos Descubiertos</h2>
+      <span class="tag">Evidencia de Calidad</span>
+    </div>
+    <div class="slide-body">
+      <div class="grid-2">
+        <div class="card red">
+          <h3>DEF-02 (Nuevo): Tope de 50 kg no validado — <code>F1-CP-05</code></h3>
+          <p><strong>Regla violada:</strong> RN-04 (máximo 50 unidades).</p>
+          <p style="margin-top:6px;">Al ingresar <code>50.01</code> para Glicerina, ni el formulario ni el endpoint bloquean el valor. Playwright capturó <code>Expected &gt;= 400, Received 201</code> y persistió 50.01 en BD.</p>
+        </div>
+        <div class="card red">
+          <h3>DEF-03 (Nuevo): Permite fórmulas vacías — <code>F2-CP-02</code></h3>
+          <p><strong>Regla violada:</strong> RN-08 (mínimo 1 materia prima).</p>
+          <p style="margin-top:6px;">Al guardar una fórmula con <code>detalles: []</code>, <code>PUT /api/productos/:id/formula</code> responde <code>HTTP 200</code> y React muestra alerta <code>"Formula guardada"</code>.</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card green">
+          <h3>Regresión Exitosa DEF-01 — <code>F1-CP-03</code></h3>
+          <p>Ingresar <code>"aloe vera "</code> (minúsculas + espacio) ahora es rechazado con <strong>HTTP 409</strong> gracias al índice <code>LOWER(TRIM(nombre))</code> en PostgreSQL.</p>
+        </div>
+        <div class="card amber">
+          <h3>Observación HTTP 500 en negativos — <code>F1-CP-06</code></h3>
+          <p>El stock <code>-1</code> es rechazado por el <code>CHECK</code> de PostgreSQL (protege datos), pero sin validación previa en React/Express devuelve <strong>HTTP 500</strong> en vez de <code>400</code>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 9: DESAFIOS, DEMO Y CONCLUSIONES -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>8. Desafíos Superados, Demostración y Conclusiones</h2>
+      <span class="tag">Cierre de Entrega</span>
+    </div>
+    <div class="slide-body">
+      <div class="grid-2">
+        <div class="card">
+          <h3>Principales Desafíos Técnicos</h3>
+          <ul>
+            <li><strong>Aislamiento de Estado ($L_9$):</strong> Limpieza transaccional automática (<code>resetBaseline</code>) en cada test para cero flakiness.</li>
+            <li><strong>Validación Nativa HTML5:</strong> Verificación de <code>checkValidity()</code> en Chrome cuando el input bloquea decimales o ceros antes de llegar a la API.</li>
+            <li><strong>Race Condition en Alertas:</strong> Sincronización paralela con <code>Promise.all([waitForResponse, waitForEvent('dialog')])</code>.</li>
+          </ul>
+        </div>
+        <div class="card blue">
+          <h3>Comandos de Demostración en Vivo</h3>
+          <pre># 1. Entrar a la suite automatizada
+cd tests-e2e
+
+# 2. Demo visual en Chrome (F3 Producción)
+npx playwright test tests/f3-produccion.spec.js --headed
+
+# 3. Suite completa (29 casos) + Reporte HTML
+npm test
+npm run report</pre>
+        </div>
+      </div>
+      <div class="card green" style="padding:14px 20px;">
+        <strong>Conclusión Final:</strong> La automatización con <strong>Playwright</strong> ejecutó 29 escenarios E2E en <strong>28.5 s</strong> (93.10% éxito), garantizando el 100% de integridad atómica en producción y traslados, y revelando <strong>2 defectos reales ocultos</strong> (<code>DEF-02</code> y <code>DEF-03</code>) antes de pasar a producción.
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="controls">
+  <div class="hint">Atajos: &larr; / &rarr; o Espacio para navegar &bull; F11 pantalla completa &bull; Ctrl+P exportar PDF</div>
+  <div class="btn-group">
+    <button id="prevBtn" onclick="move(-1)">&larr; Anterior</button>
+    <span class="counter" id="counter">1 / 9</span>
+    <button id="nextBtn" onclick="move(1)">Siguiente &rarr;</button>
+  </div>
+</footer>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const counter = document.getElementById('counter');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  let index = 0;
+
+  function render() {
+    slides.forEach((s, i) => s.classList.toggle('active', i === index));
+    counter.textContent = `${index + 1} / ${slides.length}`;
+    prevBtn.disabled = index === 0;
+    nextBtn.disabled = index === slides.length - 1;
+  }
+
+  function move(delta) {
+    index = Math.max(0, Math.min(slides.length - 1, index + delta));
+    render();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) { e.preventDefault(); move(1); }
+    if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); move(-1); }
+  });
+
+  render();
+</script>
+</body>
+</html>

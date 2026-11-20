@@ -40,8 +40,8 @@
 
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\small \textcolor{secondary}{Version-Eco: Plan Maestro de Pruebas y Reporte de Ejecución}}
-\fancyhead[R]{\small \textcolor{secondary}{Javeriana Cali -- 2026}}
+\fancyhead[L]{\small \textcolor{secondary}{Version-Eco: Plan Maestro, Casos y Automatización de Pruebas}}
+\fancyhead[R]{\small \textcolor{secondary}{Javeriana Cali -- Entrega Final 2026}}
 \fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 
@@ -62,7 +62,7 @@
     {\LARGE Facultad de Ingeniería y Ciencias}\\[0.2cm]
     {\Large Departamento de Ingeniería de Sistemas y Computación}\\[1.5cm]
     
-    {\huge \bfseries \color{primary} Plan Maestro de Pruebas, Diseño de Casos (Caja Negra) y Reporte de Ejecución}\\[0.5cm]
+    {\huge \bfseries \color{primary} Plan Maestro de Pruebas, Diseño de Casos (Caja Negra) y Automatización Funcional (Entrega Final)}\\[0.5cm]
     {\LARGE \textbf{Sistema de Gestión de Inventario y Producción}}\\[0.2cm]
     {\Large \textbf{Empresa Version-Eco}}\\[1.8cm]
     
@@ -76,7 +76,7 @@
     Daniela Orobio\\[1.5cm]
     
     \vfill
-    {\large Santiago de Cali, Colombia\\ 21 de octubre de 2026}
+    {\large Santiago de Cali, Colombia\\ 27 de noviembre de 2026}
 \end{titlepage}
 
 \tableofcontents
@@ -97,7 +97,7 @@
         \item Samuel Rueda
         \item Daniela Orobio
     \end{itemize}
-    \item \textbf{URL del Repositorio de Código:} \url{https://github.com/Benjamin-Ortiz/Version_EcoProject}
+    \item \textbf{URL del Repositorio de Código:} \url{https://github.com/benjamin94773/Version_Eco-Project}
     \item \textbf{URL de la Aplicación:}
     \begin{itemize}
         \item \textbf{Ambiente Local de Pruebas (SUT):} Frontend en \url{http://localhost:5173} y Backend API en \url{http://localhost:4000/api}.
@@ -432,13 +432,23 @@ Se implementan 10 tipos de pruebas combinadas:
     \item \textbf{Pruebas de Usabilidad:} Verificar que el registro de materias primas tome menos de 2 minutos (RNF-01).
 \end{itemize}
 
+\subsubsection{Estrategia de Automatización de Pruebas Funcionales (Actualización Entrega 2)}
+Con el fin de garantizar la repetibilidad de las pruebas de regresión y eliminar el error humano en la preparación de datos combinatorios, se incorpora al Plan Maestro de Pruebas la \textbf{Estrategia de Automatización E2E Multicapa}:
+\begin{enumerate}
+    \item \textbf{Enfoque Híbrido UI + Red + Base de Datos:} Cada prueba automatizada interactúa como un usuario real en el navegador sobre el Frontend React, intercepta la petición HTTP resultante hacia el Backend Express para verificar el código de estado (\texttt{200}, \texttt{201}, \texttt{400}, \texttt{409}) y consulta directamente PostgreSQL para certificar la persistencia ACID y ausencia de descuentos parciales.
+    \item \textbf{Aislamiento Determinístico de Datos (\textit{Test Data Sandboxing}):} Antes de cada caso de prueba se ejecuta una rutina transaccional (\texttt{resetBaseline()}) que limpia las tablas mediante \texttt{TRUNCATE ... RESTART IDENTITY CASCADE} y carga las precondiciones exactas requeridas por el caso (especialmente para las 9 corridas del Arreglo Ortogonal $L_9$).
+    \item \textbf{Ejecución Secuencial Controlada:} Se fija \texttt{workers: 1} en el orquestador para evitar condiciones de carrera sobre la base de datos local \texttt{version\_eco\_db}.
+    \item \textbf{Sincronización Reactiva sin Esperas Fijas:} Se prohíben pausas arbitrarias (\texttt{sleep}); se emplea \textit{auto-waiting} nativo de selectores DOM, \texttt{waitForResponse()} sobre endpoints REST y captura determinística de diálogos nativos (\texttt{window.alert}).
+    \item \textbf{Gestión de Evidencias ante Fallos:} Ante cualquier aserción fallida, el framework captura automáticamente captura de pantalla (\texttt{.png}), contexto DOM y traza interactiva paso a paso (\texttt{trace.zip}), consolidados en un reporte HTML navegable.
+\end{enumerate}
+
 \subsection{Entorno y Configuración de Pruebas}
 \begin{itemize}
     \item \textbf{Sistema Operativo:} Windows 10/11.
     \item \textbf{Base de Datos:} PostgreSQL 18 ejecutándose localmente en puerto 5432 (\texttt{version\_eco\_db}).
-    \item \textbf{Backend:} Node.js 20+, Express 4 en \texttt{http://localhost:4000/api}.
+    \item \textbf{Backend:} Node.js 24, Express 4 en \texttt{http://localhost:4000/api}.
     \item \textbf{Frontend:} React 18, Vite en \texttt{http://localhost:5173}.
-    \item \textbf{Navegador:} Google Chrome / Mozilla Firefox actualizado.
+    \item \textbf{Navegador y Motor de Automatización:} Google Chrome controlado mediante \textbf{Playwright Test v1.50}.
 \end{itemize}
 
 \subsection{Gestión de Riesgos y Clasificación de Defectos}
@@ -471,10 +481,10 @@ Diferencias entre frontend y backend & Media & Alto & Ejecutar pruebas de integr
 
 \subsection{Roles y Responsabilidades}
 \begin{itemize}
-    \item \textbf{Líder de pruebas (Benjamin Ortiz):} Coordinar la ejecución y controlar el cumplimiento del plan.
-    \item \textbf{Analista de pruebas (Samuel Rueda):} Diseñar casos y relacionarlos con los requisitos y técnicas de caja negra.
-    \item \textbf{Ejecutor de pruebas (Harold Guerrero):} Ejecutar casos en el navegador y almacenar evidencias.
-    \item \textbf{Responsable de defectos (Daniela Orobio):} Registrar los errores, documentar causa raíz y realizar seguimiento.
+    \item \textbf{Líder de Pruebas y Arquitectura de Automatización (Benjamin Ortiz):} Coordinar la estrategia general, configurar el entorno \texttt{Playwright + PostgreSQL} y consolidar el informe final.
+    \item \textbf{Analista de Pruebas y Selección de Casos (Samuel Rueda):} Definir criterios de selección basados en riesgo/ROI, relacionar reglas de negocio y codificar casos automatizados de F3 y F4.
+    \item \textbf{Ingeniero de Automatización E2E (Harold Guerrero):} Implementar scripts automatizados de F1 y F2, gestionar selectores robustos, capturas de evidencia y demostración en vivo.
+    \item \textbf{Responsable de Defectos y Reporte de Calidad (Daniela Orobio):} Analizar hallazgos de ejecución automatizada, documentar defectos descubiertos (\texttt{DEF-01}, \texttt{DEF-02}, \texttt{DEF-03}) y liderar la socialización de métricas.
 \end{itemize}
 
 \subsection{Observación de Trazabilidad entre Requisito e Implementación}
@@ -819,9 +829,9 @@ Para facilitar la lectura y correspondencia con el diseño de Taguchi y Tablas d
 \end{longtable}
 
 % ==============================================================================
-% 9. REPORTE DE RESULTADOS Y EVIDENCIAS DE EJECUCIÓN
+% 9. REPORTE DE RESULTADOS Y EVIDENCIAS DE EJECUCIÓN (ENTREGA 1 - MANUAL)
 % ==============================================================================
-\section{Reporte de Resultados y Evidencias de Ejecución}
+\section{Reporte de Resultados de Ejecución Manual (Entrega 1)}
 
 \subsection{Resumen Estadístico Consolidado}
 
@@ -922,14 +932,244 @@ Al crear una nueva materia prima cuyo nombre coincide con una previamente regist
 \end{tcolorbox}
 
 % ==============================================================================
-% 10. CONCLUSIONES
+% 10. SELECCIÓN Y EVALUACIÓN DE HERRAMIENTAS DE AUTOMATIZACIÓN (ENTREGA 2)
 % ==============================================================================
-\section{Conclusiones y Evaluación de la Calidad}
+\section{Selección y Evaluación de Herramientas de Automatización}
+
+\subsection{Análisis Técnico del Sistema Objeto de Prueba (SUT)}
+Para elegir la herramienta de automatización más idónea, se identificaron los requerimientos técnicos impuestos por la arquitectura real de \textbf{Version-Eco}:
+\begin{itemize}[noitemsep]
+    \item \textbf{Frontend React 18 + Vite (SPA):} Renderizado asíncrono con estados locales, formularios protegidos por validación nativa HTML5 (\texttt{min}, \texttt{required}, \texttt{step}) y uso de diálogos nativos del navegador (\texttt{window.alert} y \texttt{window.confirm}).
+    \item \textbf{Backend Express 4 (Node.js ESM):} API REST con códigos HTTP semánticos (\texttt{200}, \texttt{201}, \texttt{400}, \texttt{409}, \texttt{500}) sobre puertos locales independientes (\texttt{5173} y \texttt{4000}).
+    \item \textbf{Base de Datos PostgreSQL 18:} Reglas de integridad transaccional en PL/pgSQL (\texttt{fn\_registrar\_produccion}, \texttt{fn\_distribuir\_desde\_central}) que exigen aislar y restablecer los saldos antes de cada caso de prueba para asegurar determinismo absoluto.
+\end{itemize}
+
+\subsection{Evaluación Comparativa de Herramientas del Mercado}
+Se evaluaron cinco herramientas líderes del mercado en escala de 1 a 10 bajo seis criterios ponderados acordes con el perfil técnico del proyecto:
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{X c c c c c}
+\toprule
+\textbf{Criterio Evaluado (Peso)} & \textbf{Playwright} & \textbf{Cypress} & \textbf{Selenium} & \textbf{Katalon} & \textbf{Postman} \\
+\midrule
+Compatibilidad Stack JS / React (20\%) & 10 & 10 & 7 & 6 & 5 \\
+Validación HTML5 y \texttt{alert/confirm} (20\%) & 10 & 7 & 8 & 7 & N/A (0) \\
+Integración UI + API + BD en un flujo (20\%) & 10 & 8 & 7 & 7 & 4 \\
+Reportería HTML/JSON y Trazas (15\%) & 10 & 8 & 5 & 8 & 7 \\
+Estabilidad \textit{Auto-Wait} y Velocidad (15\%) & 10 & 9 & 6 & 7 & 9 \\
+Costo / Licenciamiento Open Source (10\%) & 10 & 9 & 10 & 5 & 9 \\
+\midrule
+\textbf{Puntaje Ponderado Total (sobre 10)} & \textbf{10.0} & \textbf{8.50} & \textbf{7.15} & \textbf{6.75} & \textbf{4.95} \\
+\bottomrule
+\end{tabularx}
+\caption{Matriz Comparativa Ponderada de Herramientas de Automatización.}\label{tab:eval_herramientas}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{2.6cm} X X}
+\toprule
+\textbf{Herramienta} & \textbf{Fortalezas Identificadas} & \textbf{Limitaciones frente a Version-Eco} \\
+\midrule
+\textbf{Playwright} \newline \textit{(Seleccionada)} & Nativo en Node.js/ESM; soporta validación HTML5 (\texttt{checkValidity()}), diálogos nativos, interceptación HTTP, reporte HTML con \texttt{trace.zip} y arranque automático \texttt{webServer}. & Requiere conocimientos básicos de JavaScript asíncrono (\texttt{async/await}). \\
+\addlinespace
+\textbf{Cypress} & Excelente depuración visual y curva rápida en aplicaciones React. & Restricciones en pestañas múltiples, manejo menos directo de diálogos nativos bloqueantes y mayor consumo de memoria en Windows. \\
+\addlinespace
+\textbf{Selenium WebDriver} & Estándar clásico multi-lenguaje con amplia comunidad. & Carece de \textit{auto-waiting} nativo y de reportero HTML integrado; mayor fragilidad (\textit{flakiness}) frente a re-renderizados de React. \\
+\addlinespace
+\textbf{Katalon Studio} & Grabación \textit{low-code} intuitiva para perfiles sin programación. & Suite pesada en recursos, basada en Groovy fuera del stack JS del proyecto y funciones avanzadas sujetas a licencia comercial. \\
+\addlinespace
+\textbf{Postman / Newman} & Excelente para pruebas unitarias de contratos REST API y CI rápido. & No ejecuta pruebas en navegador real; no puede validar el DOM de React, alertas del Dashboard ni bloqueos HTML5 de formularios. \\
+\bottomrule
+\end{tabularx}
+\caption{Análisis Cualitativo de Herramientas Evaluadas.}\label{tab:cualitativo_herramientas}
+\end{table}
+
+\subsection{Justificación de la Selección Final}
+Se seleccionó \textbf{Playwright Test (\texttt{@playwright/test} v1.50)} complementado con el controlador oficial \textbf{node-postgres (\texttt{pg})} por las siguientes razones técnicas:
+\begin{enumerate}[noitemsep]
+    \item \textbf{Unificación de Stack:} Utiliza JavaScript ESM, el mismo lenguaje del Frontend React y del Backend Express, reduciendo la curva de aprendizaje del equipo.
+    \item \textbf{Cobertura E2E Real sin Simulación:} Ejecuta acciones reales en Google Chrome sobre \texttt{http://localhost:5173}, permitiendo validar tanto la lógica React/HTML5 como las respuestas HTTP reales de la API (\texttt{waitForResponse}).
+    \item \textbf{Control Transaccional de Precondiciones:} Integrar el cliente \texttt{pg} dentro de la suite permite reiniciar el estado de PostgreSQL antes de cada caso en $\sim 20\,\text{ms}$, resolviendo el desafío de las dependencias de stock del Arreglo Ortogonal $L_9$.
+    \item \textbf{Trazabilidad y Evidencias Automáticas:} Genera reportes interactivos en HTML (\texttt{playwright-report/index.html}), resultados estructurados en JSON y capturas automáticas de pantalla en cada defecto descubierto.
+\end{enumerate}
+
+% ==============================================================================
+% 11. SELECCIÓN E IMPLEMENTACIÓN DE CASOS AUTOMATIZADOS
+% ==============================================================================
+\section{Selección e Implementación de Casos de Prueba Automatizados}
+
+\subsection{Criterios de Selección (Basado en Riesgo y ROI)}
+Siguiendo los lineamientos ISTQB, no se automatizó el 100\% de los casos de manera indiscriminada, sino aplicando criterios de retorno de inversión (ROI), riesgo y repetibilidad:
+\begin{itemize}[noitemsep]
+    \item \textbf{Criterios de Inclusión (Seleccionados):} Casos de prioridad \textbf{Crítica} o \textbf{Alta}; pruebas con alto costo de preparación manual (las 9 corridas combinatorias de Taguchi $L_9$); reglas numéricas de valores límite sensibles a regresión; y verificación de regresión sobre el defecto \texttt{DEF-01}.
+    \item \textbf{Criterios de Exclusión (Manuales):} Casos de prioridad \textbf{Media} enfocados en inspección visual subjetiva de semáforos de severidad en Dashboard (\texttt{F1-CP-07}) o interacción destructiva humana con confirmación visual e historial (\texttt{F1-CP-08}).
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{X c c c c}
+\toprule
+\textbf{Funcionalidad} & \textbf{Total Entrega 1} & \textbf{Automatizados} & \textbf{Manuales} & \textbf{\% Cobertura Autom.} \\
+\midrule
+\textbf{F3: Registro de Producción} & 12 & 12 & 0 & \textbf{100.0\%} \\
+\textbf{F4: Traslado a Sedes} & 7 & 7 & 0 & \textbf{100.0\%} \\
+\textbf{F1: Gestión de Materia Prima} & 8 & 6 & 2 & \textbf{75.0\%} \\
+\textbf{F2: Creación de Fórmulas} & 4 & 4 & 0 & \textbf{100.0\%} \\
+\midrule
+\textbf{TOTAL PROYECTO} & \textbf{31} & \textbf{29} & \textbf{2} & \textbf{93.55\%} \\
+\bottomrule
+\end{tabularx}
+\caption{Cobertura de Selección para Automatización sobre los 31 Casos de Entrega 1.}\label{tab:seleccion_resumen}
+\end{table}
+
+\subsection{Matriz Completa de Selección (31 Casos)}
+
+\begin{longtable}{p{1.6cm} p{1.6cm} p{2.0cm} p{9.8cm}}
+\caption{Trazabilidad de Selección de Casos para Automatización.}\label{tab:seleccion_31}\\
+\toprule
+\textbf{ID Caso} & \textbf{Prioridad} & \textbf{Decisión} & \textbf{Justificación Técnica} \\
+\midrule
+\endfirsthead
+\multicolumn{4}{c}{\tablename\ \thetable\ -- \textit{Continuación de la página anterior}} \\
+\toprule
+\textbf{ID Caso} & \textbf{Prioridad} & \textbf{Decisión} & \textbf{Justificación Técnica} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{4}{r}{\textit{Continúa en la siguiente página\dots}} \\
+\endfoot
+\bottomrule
+\endlastfoot
+\textbf{F3-CP-01..09} & Crítica/Alta & \textbf{\textcolor{accentgreen}{Automatizado}} & Núcleo combinatorio del Arreglo Ortogonal $L_9$; requiere ajuste exacto repetitivo de 3 stocks en BD y verificación atómica (RN-10). \\
+\textbf{F3-CP-10..12} & Alta & \textbf{\textcolor{accentgreen}{Automatizado}} & Validación de particiones inválidas R1 ($0$, $-5$, $2.5$) en control HTML5 del formulario de producción (RN-12, RN-15). \\
+\textbf{F4-CP-01..07} & Crítica/Alta & \textbf{\textcolor{accentgreen}{Automatizado}} & Flujo crítico logístico multisede y valores límite de stock ($20$ vs $21$); verifica saldos en Central y Sedes (RN-11). \\
+\textbf{F1-CP-01..02} & Alta & \textbf{\textcolor{accentgreen}{Automatizado}} & Regresión básica de creación de catálogo y unicidad exacta con verificación de HTTP 201 / HTTP 409. \\
+\textbf{F1-CP-03} & Alta & \textbf{\textcolor{accentgreen}{Automatizado}} & Prueba de regresión obligatoria para verificar mitigación de \texttt{DEF-01} (\texttt{"aloe vera "}). \\
+\textbf{F1-CP-04..06} & Alta & \textbf{\textcolor{accentgreen}{Automatizado}} & Valores límite de capacidad ($50$ vs $50.01$ -- RN-04) y restricción negativa ($-1$ -- RN-02). \\
+\textbf{F1-CP-07} & Media & \textbf{\textcolor{secondary}{Manual}} & Prioridad media orientada a inspección visual de estilos/semáforo de alerta al crear stock inicial en cero. \\
+\textbf{F1-CP-08} & Media & \textbf{\textcolor{secondary}{Manual}} & Prioridad media enfocada en confirmación humana de retiro destructivo (\texttt{window.confirm}) con fórmulas activas. \\
+\textbf{F2-CP-01..04} & Alta & \textbf{\textcolor{accentgreen}{Automatizado}} & Reglas estructurales críticas de composición de recetas: válida, vacía (RN-08), repetida (RN-14) y cantidad $0$. \\
+\end{longtable}
+
+\subsection{Arquitectura Implementada de la Suite Automatizada (\texttt{tests-e2e/})}
+La implementación reside en el directorio \texttt{tests-e2e/} del repositorio y sigue un diseño modular desacoplado:
+\begin{itemize}[noitemsep]
+    \item \texttt{tests-e2e/playwright.config.js}: Configura ejecución secuencial (\texttt{workers: 1}), navegador Google Chrome real, arranque automático (\texttt{webServer}) del Backend (puerto 4000) y Frontend (puerto 5173), y salida triple (\texttt{list}, \texttt{html} y \texttt{json}).
+    \item \texttt{tests-e2e/helpers/db.js}: Módulo de soporte PostgreSQL que expone \texttt{resetBaseline()} y \texttt{getStocksSnapshot()} para sembrar exactamente los saldos requeridos antes de cada prueba y verificar el estado final tras la acción en interfaz.
+    \item \texttt{tests-e2e/tests/f1-materias-primas.spec.js}: Automatiza \texttt{F1-CP-01} a \texttt{F1-CP-06}.
+    \item \texttt{tests-e2e/tests/f2-formulas.spec.js}: Automatiza \texttt{F2-CP-01} a \texttt{F2-CP-04}.
+    \item \texttt{tests-e2e/tests/f3-produccion.spec.js}: Automatiza \texttt{F3-CP-01} a \texttt{F3-CP-12} (incluyendo verificación en Dashboard).
+    \item \texttt{tests-e2e/tests/f4-distribucion.spec.js}: Automatiza \texttt{F4-CP-01} a \texttt{F4-CP-07} (incluyendo consulta en módulo Inventario).
+\end{itemize}
+
+% ==============================================================================
+% 12. REPORTE DE EJECUCIÓN AUTOMATIZADA Y HALLAZGOS RELEVANTES
+% ==============================================================================
+\section{Reporte de Ejecución Automatizada y Hallazgos Relevantes}
+
+\subsection{Consolidado Estadístico de Ejecución Real (Playwright)}
+La suite automatizada de \textbf{29 casos de prueba} se ejecutó íntegramente contra la aplicación desplegada localmente (\texttt{http://localhost:5173} + \texttt{http://localhost:4000} + PostgreSQL 18) mediante \texttt{npx playwright test}, completando el ciclo total en \textbf{28.5 segundos}:
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{X c c c c r}
+\toprule
+\textbf{Funcionalidad / Archivo Spec} & \textbf{Ejecutados} & \textbf{Aprobados} & \textbf{Fallidos} & \textbf{Omitidos} & \textbf{\% Éxito} \\
+\midrule
+\textbf{F1: Materias Primas} (\texttt{f1-materias-primas.spec.js}) & 6 & 5 & 1 & 0 & \textbf{83.33\%} \\
+\textbf{F2: Fórmulas} (\texttt{f2-formulas.spec.js}) & 4 & 3 & 1 & 0 & \textbf{75.00\%} \\
+\textbf{F3: Producción} (\texttt{f3-produccion.spec.js}) & 12 & 12 & 0 & 0 & \textbf{100.00\%} \\
+\textbf{F4: Distribución} (\texttt{f4-distribucion.spec.js}) & 7 & 7 & 0 & 0 & \textbf{100.00\%} \\
+\midrule
+\textbf{TOTAL AUTOMATIZADOS} & \textbf{29} & \textbf{27} & \textbf{2} & \textbf{0} & \textbf{93.10\%} \\
+\bottomrule
+\end{tabularx}
+\caption{Consolidado Real de Ejecución Automatizada con Playwright.}\label{tab:resumen_playwright}
+\end{table}
+
+\subsection{Detalle de Ejecución Caso por Caso (Tiempos Reales)}
+
+\begin{longtable}{p{1.8cm} p{2.0cm} p{1.6cm} p{9.6cm}}
+\caption{Resultados Reales por Caso Obtenidos de \texttt{test-results/results.json}.}\label{tab:detalle_playwright}\\
+\toprule
+\textbf{ID Caso} & \textbf{Estado} & \textbf{Duración} & \textbf{Evidencia y Verificación Realizada} \\
+\midrule
+\endfirsthead
+\multicolumn{4}{c}{\tablename\ \thetable\ -- \textit{Continuación de la página anterior}} \\
+\toprule
+\textbf{ID Caso} & \textbf{Estado} & \textbf{Duración} & \textbf{Evidencia y Verificación Realizada} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{4}{r}{\textit{Continúa en la siguiente página\dots}} \\
+\endfoot
+\bottomrule
+\endlastfoot
+\textbf{F1-CP-01} & \textbf{\textcolor{accentgreen}{Aprobado}} & 1078 ms & HTTP 201; ``Aceite de coco'' visible en tabla y stock 20 verificado en BD. \\
+\textbf{F1-CP-02} & \textbf{\textcolor{accentgreen}{Aprobado}} & 814 ms & HTTP 409; mensaje UI ``Registro duplicado'' por índice único. \\
+\textbf{F1-CP-03} & \textbf{\textcolor{accentgreen}{Aprobado}} & 773 ms & \textbf{Regresión DEF-01:} Índice \texttt{LOWER(TRIM(nombre))} rechazó ``aloe vera '' con HTTP 409. \\
+\textbf{F1-CP-04} & \textbf{\textcolor{accentgreen}{Aprobado}} & 793 ms & HTTP 201; Glicerina registrada exactamente en tope $50\,\text{kg}$. \\
+\textbf{F1-CP-05} & \textbf{\textcolor{accentred}{Fallido}} & 905 ms & \textbf{DEF-02:} Esperado HTTP $\ge 400$ (RN-04), recibido HTTP \textbf{201}; persistió $50.01\,\text{kg}$. \\
+\textbf{F1-CP-06} & \textbf{\textcolor{accentgreen}{Aprobado}} & 1077 ms & Rechazo aplicado en BD por \texttt{CHECK >= 0}, aunque API devolvió HTTP 500. \\
+\textbf{F2-CP-01} & \textbf{\textcolor{accentgreen}{Aprobado}} & 816 ms & HTTP 200; alerta ``Formula guardada'' capturada y 2 filas en \texttt{detalle\_formula}. \\
+\textbf{F2-CP-02} & \textbf{\textcolor{accentred}{Fallido}} & 860 ms & \textbf{DEF-03:} Esperado rechazo por fórmula vacía (RN-08), recibido HTTP \textbf{200}. \\
+\textbf{F2-CP-03} & \textbf{\textcolor{accentgreen}{Aprobado}} & 1102 ms & HTTP 409; restricción única impidió repetir ``Aloe vera'' en la misma fórmula. \\
+\textbf{F2-CP-04} & \textbf{\textcolor{accentgreen}{Aprobado}} & 757 ms & Validación frontend bloqueó cantidad $0$ sin enviar petición HTTP. \\
+\textbf{F3-CP-01} & \textbf{\textcolor{accentgreen}{Aprobado}} & 920 ms & HTTP 201; saldos finales exactos ($5,5,5$), Central $+10$, Dashboard sin alertas. \\
+\textbf{F3-CP-02} & \textbf{\textcolor{accentgreen}{Aprobado}} & 819 ms & HTTP 201; B y C agotados en $0$, Central $+25$ y alertas verificadas en Dashboard. \\
+\textbf{F3-CP-03} & \textbf{\textcolor{accentgreen}{Aprobado}} & 760 ms & HTTP 400 \texttt{P0001}; rollback total sin alterar A, B ni C. \\
+\textbf{F3-CP-04} & \textbf{\textcolor{accentgreen}{Aprobado}} & 752 ms & HTTP 400 \texttt{P0001}; rechazo por C sin descuento parcial en A ni B. \\
+\textbf{F3-CP-05} & \textbf{\textcolor{accentgreen}{Aprobado}} & 801 ms & HTTP 400 \texttt{P0001}; rechazo atómico por B ($4.95 < 5.0$). \\
+\textbf{F3-CP-06} & \textbf{\textcolor{accentgreen}{Aprobado}} & 848 ms & HTTP 201; A y C en $0$, Central $+1$, alertas confirmadas en Dashboard. \\
+\textbf{F3-CP-07} & \textbf{\textcolor{accentgreen}{Aprobado}} & 784 ms & HTTP 400 \texttt{P0001}; rechazo por A y B, insumo C intacto en $1.0$. \\
+\textbf{F3-CP-08} & \textbf{\textcolor{accentgreen}{Aprobado}} & 722 ms & HTTP 400 \texttt{P0001}; rechazo por A y C, insumo B intacto en $10.0$. \\
+\textbf{F3-CP-09} & \textbf{\textcolor{accentgreen}{Aprobado}} & 714 ms & HTTP 400 \texttt{P0001}; rechazo por A ($0.45 < 0.5$), B y C intactos. \\
+\textbf{F3-CP-10..12} & \textbf{\textcolor{accentgreen}{Aprobado}} & 735--783 ms & Controles HTML5 (\texttt{checkValidity() == false}) bloquearon $0$, $-5$ y $2.5$ sin enviar API. \\
+\textbf{F4-CP-01..02} & \textbf{\textcolor{accentgreen}{Aprobado}} & 732--800 ms & HTTP 201; saldos en Central ($15$ y $0$) y Sede A ($5$ y $20$) verificados en BD. \\
+\textbf{F4-CP-03} & \textbf{\textcolor{accentgreen}{Aprobado}} & 774 ms & Frontend mostró ``Stock insuficiente en central'' al solicitar $21 > 20$. \\
+\textbf{F4-CP-05} & \textbf{\textcolor{accentgreen}{Aprobado}} & 968 ms & Traslados sucesivos ($3+4$) acumularon $7$ en Sede B en vista \texttt{/inventario}. \\
+\textbf{F4-CP-04,06,07} & \textbf{\textcolor{accentgreen}{Aprobado}} & 775--813 ms & Controles HTML5 (\texttt{checkValidity() == false}) bloquearon $2.5$, $0$ y $-5$ antes del envío. \\
+\end{longtable}
+
+\subsection{Hallazgos Relevantes y Nuevos Defectos Descubiertos}
+La ejecución automatizada estricta permitió revelar hallazgos críticos que habían pasado desapercibidos durante las validaciones manuales iniciales de la Entrega 1:
+
+\begin{tcolorbox}[colback=lightgray,colframe=accentred,title=\textbf{Defecto Nuevo DEF-02: Violación del Tope Máximo de Stock (F1-CP-05 / RN-04)}]
+\small
+\textbf{Severidad:} Media \quad \textbf{Prioridad:} Alta \quad \textbf{Módulo:} F1 (\texttt{MateriasPrimasPage.jsx} y \texttt{POST /api/materias-primas})\\
+\textbf{Evidencia Playwright:} \texttt{Expected >= 400, Received 201} -- Captura en \texttt{test-results/f1-materias-primas-.../test-failed-1.png}.\\
+\textbf{Descripción:} Al ingresar \texttt{50.01} kg para ``Glicerina'', el formulario no posee atributo \texttt{max="50"} ni el endpoint valida el tope superior en servidor ni en PostgreSQL (\texttt{CHECK (cantidad\_disponible >= 0)}), permitiendo persistir valores superiores a 50 en violación directa de \textbf{RN-04}.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=lightgray,colframe=accentred,title=\textbf{Defecto Nuevo DEF-03: Aceptación de Fórmulas Vacías (F2-CP-02 / RN-08)}]
+\small
+\textbf{Severidad:} Alta \quad \textbf{Prioridad:} Alta \quad \textbf{Módulo:} F2 (\texttt{ProductosPage.jsx} y \texttt{PUT /api/productos/:id/formula})\\
+\textbf{Evidencia Playwright:} \texttt{Expected >= 400, Received 200} -- Diálogo nativo mostró ``Formula guardada'' con 0 insumos.\\
+\textbf{Descripción:} Al guardar la receta de un producto sin agregar materias primas (\texttt{detalles: []}), ni el frontend ni el controlador Express exigen \texttt{detalles.length > 0}. El backend borra las filas previas y retorna HTTP 200 OK, violando \textbf{RN-08}.
+\end{tcolorbox}
+
+\begin{itemize}
+    \item \textbf{Confirmación de Regresión en DEF-01 (\texttt{F1-CP-03}):} La prueba automatizada confirmó que el índice único relacional \texttt{uq\_materia\_prima\_nombre} sobre \texttt{LOWER(TRIM(nombre))} sí rechaza duplicados con mayúsculas y espacios terminales (HTTP 409). Se recomienda no obstante agregar \texttt{nombre.trim()} en Express para respuestas más descriptivas.
+    \item \textbf{Observación de Manejo de Errores en \texttt{F1-CP-06} (\texttt{-1 kg}):} Aunque PostgreSQL protege la integridad evitando almacenar cantidades negativas mediante la restricción \texttt{CHECK}, el input HTML carece de \texttt{min="0"} y el controlador Express devuelve \texttt{HTTP 500 Error interno del servidor} en lugar de un error controlado \texttt{400 Bad Request}.
+    \item \textbf{Robustez Transaccional de F3 y F4:} El \textbf{100\%} de los casos de producción ($12/12$) y traslado a sedes ($7/7$) aprobaron sin intermitencias, confirmando que la lógica crítica PL/pgSQL es sólida y libre de regresiones.
+\end{itemize}
+
+% ==============================================================================
+% 13. CONCLUSIONES FINALES Y LECCIONES APRENDIDAS
+% ==============================================================================
+\section{Conclusiones Finales y Lecciones Aprendidas}
 
 \begin{enumerate}
-    \item \textbf{Efectividad de la Estrategia de Pruebas:} La combinación de Arreglos Ortogonales ($L_9$) y Tablas de Decisión permitió someter a prueba exhaustiva la funcionalidad crítica de producción con solo 12 corridas, demostrando que el procedimiento almacenado de PostgreSQL cumple rigurosamente la regla de atomicidad (RN-10).
-    \item \textbf{Aprobación Formal del Software:} Al alcanzar un \textbf{96.77\% de casos superados} frente al estándar del 90\%, el sistema Version-Eco se certifica como estable, consistente y apto para su utilización operativa.
-    \item \textbf{Identificación Exitosa de Defectos:} Las pruebas manuales planificadas permitieron capturar y aislar el defecto conocido DEF-01 en el catálogo de materias primas, proporcionando la solución técnica preventiva para el siguiente sprint.
+    \item \textbf{Valor Descubridor de la Automatización Real:} Frente a la percepción manual de la Entrega 1 ($96.77\%$), la automatización estricta multicapa con Playwright alcanzó un \textbf{93.10\% de aprobación} ($27/29$), pero descubrió \textbf{dos defectos funcionales reales previamente omitidos} (\texttt{DEF-02} y \texttt{DEF-03}) y confirmó la regresión de \texttt{DEF-01}.
+    \item \textbf{Idoneidad de Playwright + PostgreSQL:} La selección de Playwright demostró ser altamente efectiva al completar todo el flujo E2E de 29 escenarios en navegador real en \textbf{28.5 segundos}, validando desde controles HTML5 hasta transacciones ACID en base de datos.
+    \item \textbf{Desafío del Aislamiento de Estado:} El principal reto técnico superado fue la interdependencia de inventarios entre casos del Arreglo Ortogonal $L_9$; la creación de una capa de \textit{sandboxing} transaccional (\texttt{resetBaseline()}) garantizó pruebas 100\% deterministas y reproducibles.
+    \item \textbf{Recomendación de Cierre:} Corregir \texttt{DEF-02} (validación \texttt{<= 50}) y \texttt{DEF-03} (exigir \texttt{detalles.length > 0}) antes del paso a producción, ejecutando nuevamente \texttt{npx playwright test} como puerta de calidad automatizada.
 \end{enumerate}
 
 \end{document}
