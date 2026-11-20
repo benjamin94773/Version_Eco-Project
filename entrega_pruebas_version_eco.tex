@@ -433,12 +433,12 @@ Se implementan 10 tipos de pruebas combinadas:
 \end{itemize}
 
 \subsubsection{Estrategia de Automatización de Pruebas Funcionales (Actualización Entrega 2)}
-Con el fin de garantizar la repetibilidad de las pruebas de regresión y eliminar el error humano en la preparación de datos combinatorios, se incorpora al Plan Maestro de Pruebas la \textbf{Estrategia de Automatización E2E Multicapa}:
+Con el fin de garantizar la repetibilidad de las pruebas de regresión y eliminar el error humano en la preparación de datos combinatorios, se incorpora al Plan Maestro de Pruebas la \textbf{Estrategia de Automatización E2E Multicapa} estructurada bajo cuatro patrones de diseño de pruebas:
 \begin{enumerate}
-    \item \textbf{Enfoque Híbrido UI + Red + Base de Datos:} Cada prueba automatizada interactúa como un usuario real en el navegador sobre el Frontend React, intercepta la petición HTTP resultante hacia el Backend Express para verificar el código de estado (\texttt{200}, \texttt{201}, \texttt{400}, \texttt{409}) y consulta directamente PostgreSQL para certificar la persistencia ACID y ausencia de descuentos parciales.
-    \item \textbf{Aislamiento Determinístico de Datos (\textit{Test Data Sandboxing}):} Antes de cada caso de prueba se ejecuta una rutina transaccional (\texttt{resetBaseline()}) que limpia las tablas mediante \texttt{TRUNCATE ... RESTART IDENTITY CASCADE} y carga las precondiciones exactas requeridas por el caso (especialmente para las 9 corridas del Arreglo Ortogonal $L_9$).
-    \item \textbf{Ejecución Secuencial Controlada:} Se fija \texttt{workers: 1} en el orquestador para evitar condiciones de carrera sobre la base de datos local \texttt{version\_eco\_db}.
-    \item \textbf{Sincronización Reactiva sin Esperas Fijas:} Se prohíben pausas arbitrarias (\texttt{sleep}); se emplea \textit{auto-waiting} nativo de selectores DOM, \texttt{waitForResponse()} sobre endpoints REST y captura determinística de diálogos nativos (\texttt{window.alert}).
+    \item \textbf{Patrón Page Object Model (POM):} Se encapsulan los selectores DOM y acciones de cada vista React en clases independientes dentro de \texttt{tests-e2e/pages/} (\texttt{MateriasPrimasPage}, \texttt{ProductosPage}, \texttt{ProduccionPage}, \texttt{DistribucionPage}, \texttt{DashboardPage}), desacoplando los scripts de prueba de cambios visuales en la interfaz y eliminando duplicación de selectores.
+    \item \textbf{Pruebas Dirigidas por Datos (\textit{Data-Driven Testing}) y Patrón AAA:} Los escenarios repetitivos (como las 9 corridas del Arreglo Ortogonal $L_9$ y las particiones R1) se parametrizan mediante arreglos de datos siguiendo estrictamente la estructura \textit{Arrange -- Act -- Assert}.
+    \item \textbf{Enfoque Híbrido UI + Red + Base de Datos (\textit{Test Data Builder}):} Antes de cada caso, \texttt{resetBaseline()} reinicia PostgreSQL mediante \texttt{TRUNCATE ... RESTART IDENTITY CASCADE} y siembra las precondiciones exactas en $\sim 20\,\text{ms}$; tras la interacción en Chrome y la interceptación HTTP (\texttt{waitForResponse()}), se consulta directamente la BD para certificar persistencia ACID.
+    \item \textbf{Ejecución Secuencial y Sincronización Reactiva:} Se fija \texttt{workers: 1} para evitar condiciones de carrera sobre \texttt{version\_eco\_db}; se prohíben esperas fijas (\texttt{no sleep}) usando \textit{auto-waiting}, \texttt{checkValidity()} y \texttt{waitForEvent('dialog')}.
     \item \textbf{Gestión de Evidencias ante Fallos:} Ante cualquier aserción fallida, el framework captura automáticamente captura de pantalla (\texttt{.png}), contexto DOM y traza interactiva paso a paso (\texttt{trace.zip}), consolidados en un reporte HTML navegable.
 \end{enumerate}
 
@@ -1056,15 +1056,13 @@ Siguiendo los lineamientos ISTQB, no se automatizó el 100\% de los casos de man
 \textbf{F2-CP-01..04} & Alta & \textbf{\textcolor{accentgreen}{Automatizado}} & Reglas estructurales críticas de composición de recetas: válida, vacía (RN-08), repetida (RN-14) y cantidad $0$. \\
 \end{longtable}
 
-\subsection{Arquitectura Implementada de la Suite Automatizada (\texttt{tests-e2e/})}
-La implementación reside en el directorio \texttt{tests-e2e/} del repositorio y sigue un diseño modular desacoplado:
+\subsection{Arquitectura Implementada y Patrones de Diseño (\texttt{tests-e2e/})}
+La implementación reside en el directorio \texttt{tests-e2e/} del repositorio y aplica los patrones \textbf{Page Object Model (POM)}, \textbf{Data-Driven Testing}, \textbf{Test Data Builder} y \textbf{Arrange--Act--Assert}:
 \begin{itemize}[noitemsep]
     \item \texttt{tests-e2e/playwright.config.js}: Configura ejecución secuencial (\texttt{workers: 1}), navegador Google Chrome real, arranque automático (\texttt{webServer}) del Backend (puerto 4000) y Frontend (puerto 5173), y salida triple (\texttt{list}, \texttt{html} y \texttt{json}).
-    \item \texttt{tests-e2e/helpers/db.js}: Módulo de soporte PostgreSQL que expone \texttt{resetBaseline()} y \texttt{getStocksSnapshot()} para sembrar exactamente los saldos requeridos antes de cada prueba y verificar el estado final tras la acción en interfaz.
-    \item \texttt{tests-e2e/tests/f1-materias-primas.spec.js}: Automatiza \texttt{F1-CP-01} a \texttt{F1-CP-06}.
-    \item \texttt{tests-e2e/tests/f2-formulas.spec.js}: Automatiza \texttt{F2-CP-01} a \texttt{F2-CP-04}.
-    \item \texttt{tests-e2e/tests/f3-produccion.spec.js}: Automatiza \texttt{F3-CP-01} a \texttt{F3-CP-12} (incluyendo verificación en Dashboard).
-    \item \texttt{tests-e2e/tests/f4-distribucion.spec.js}: Automatiza \texttt{F4-CP-01} a \texttt{F4-CP-07} (incluyendo consulta en módulo Inventario).
+    \item \texttt{tests-e2e/pages/} \textbf{(Patrón Page Object Model -- POM):} Encapsula localizadores e interacciones de interfaz en cinco clases reutilizables: \texttt{MateriasPrimasPage.js}, \texttt{ProductosPage.js}, \texttt{ProduccionPage.js}, \texttt{DistribucionPage.js} y \texttt{DashboardPage.js}.
+    \item \texttt{tests-e2e/helpers/db.js} \textbf{(Patrón Test Data Builder):} Módulo PostgreSQL que expone \texttt{resetBaseline()} y \texttt{getStocksSnapshot()} para sembrar los saldos exactos antes de cada prueba y verificar el estado final tras la acción en interfaz.
+    \item \texttt{tests-e2e/tests/*.spec.js}: Cuatro suites de negocio limpias (\texttt{f1-materias-primas.spec.js}, \texttt{f2-formulas.spec.js}, \texttt{f3-produccion.spec.js}, \texttt{f4-distribucion.spec.js}) centradas exclusivamente en orquestar casos y validar aserciones.
 \end{itemize}
 
 % ==============================================================================
@@ -1073,7 +1071,7 @@ La implementación reside en el directorio \texttt{tests-e2e/} del repositorio y
 \section{Reporte de Ejecución Automatizada y Hallazgos Relevantes}
 
 \subsection{Consolidado Estadístico de Ejecución Real (Playwright)}
-La suite automatizada de \textbf{29 casos de prueba} se ejecutó íntegramente contra la aplicación desplegada localmente (\texttt{http://localhost:5173} + \texttt{http://localhost:4000} + PostgreSQL 18) mediante \texttt{npx playwright test}, completando el ciclo total en \textbf{28.5 segundos}:
+La suite automatizada de \textbf{29 casos de prueba} refactorizada con Page Object Model se ejecutó íntegramente contra la aplicación desplegada localmente (\texttt{http://localhost:5173} + \texttt{http://localhost:4000} + PostgreSQL 18) mediante \texttt{npx playwright test}, completando el ciclo total en \textbf{32.5 segundos}:
 
 \begin{table}[htbp]
 \centering
@@ -1111,30 +1109,30 @@ La suite automatizada de \textbf{29 casos de prueba} se ejecutó íntegramente c
 \endfoot
 \bottomrule
 \endlastfoot
-\textbf{F1-CP-01} & \textbf{\textcolor{accentgreen}{Aprobado}} & 1078 ms & HTTP 201; ``Aceite de coco'' visible en tabla y stock 20 verificado en BD. \\
-\textbf{F1-CP-02} & \textbf{\textcolor{accentgreen}{Aprobado}} & 814 ms & HTTP 409; mensaje UI ``Registro duplicado'' por índice único. \\
-\textbf{F1-CP-03} & \textbf{\textcolor{accentgreen}{Aprobado}} & 773 ms & \textbf{Regresión DEF-01:} Índice \texttt{LOWER(TRIM(nombre))} rechazó ``aloe vera '' con HTTP 409. \\
-\textbf{F1-CP-04} & \textbf{\textcolor{accentgreen}{Aprobado}} & 793 ms & HTTP 201; Glicerina registrada exactamente en tope $50\,\text{kg}$. \\
-\textbf{F1-CP-05} & \textbf{\textcolor{accentred}{Fallido}} & 905 ms & \textbf{DEF-02:} Esperado HTTP $\ge 400$ (RN-04), recibido HTTP \textbf{201}; persistió $50.01\,\text{kg}$. \\
-\textbf{F1-CP-06} & \textbf{\textcolor{accentgreen}{Aprobado}} & 1077 ms & Rechazo aplicado en BD por \texttt{CHECK >= 0}, aunque API devolvió HTTP 500. \\
-\textbf{F2-CP-01} & \textbf{\textcolor{accentgreen}{Aprobado}} & 816 ms & HTTP 200; alerta ``Formula guardada'' capturada y 2 filas en \texttt{detalle\_formula}. \\
-\textbf{F2-CP-02} & \textbf{\textcolor{accentred}{Fallido}} & 860 ms & \textbf{DEF-03:} Esperado rechazo por fórmula vacía (RN-08), recibido HTTP \textbf{200}. \\
-\textbf{F2-CP-03} & \textbf{\textcolor{accentgreen}{Aprobado}} & 1102 ms & HTTP 409; restricción única impidió repetir ``Aloe vera'' en la misma fórmula. \\
-\textbf{F2-CP-04} & \textbf{\textcolor{accentgreen}{Aprobado}} & 757 ms & Validación frontend bloqueó cantidad $0$ sin enviar petición HTTP. \\
-\textbf{F3-CP-01} & \textbf{\textcolor{accentgreen}{Aprobado}} & 920 ms & HTTP 201; saldos finales exactos ($5,5,5$), Central $+10$, Dashboard sin alertas. \\
-\textbf{F3-CP-02} & \textbf{\textcolor{accentgreen}{Aprobado}} & 819 ms & HTTP 201; B y C agotados en $0$, Central $+25$ y alertas verificadas en Dashboard. \\
-\textbf{F3-CP-03} & \textbf{\textcolor{accentgreen}{Aprobado}} & 760 ms & HTTP 400 \texttt{P0001}; rollback total sin alterar A, B ni C. \\
-\textbf{F3-CP-04} & \textbf{\textcolor{accentgreen}{Aprobado}} & 752 ms & HTTP 400 \texttt{P0001}; rechazo por C sin descuento parcial en A ni B. \\
-\textbf{F3-CP-05} & \textbf{\textcolor{accentgreen}{Aprobado}} & 801 ms & HTTP 400 \texttt{P0001}; rechazo atómico por B ($4.95 < 5.0$). \\
-\textbf{F3-CP-06} & \textbf{\textcolor{accentgreen}{Aprobado}} & 848 ms & HTTP 201; A y C en $0$, Central $+1$, alertas confirmadas en Dashboard. \\
-\textbf{F3-CP-07} & \textbf{\textcolor{accentgreen}{Aprobado}} & 784 ms & HTTP 400 \texttt{P0001}; rechazo por A y B, insumo C intacto en $1.0$. \\
-\textbf{F3-CP-08} & \textbf{\textcolor{accentgreen}{Aprobado}} & 722 ms & HTTP 400 \texttt{P0001}; rechazo por A y C, insumo B intacto en $10.0$. \\
-\textbf{F3-CP-09} & \textbf{\textcolor{accentgreen}{Aprobado}} & 714 ms & HTTP 400 \texttt{P0001}; rechazo por A ($0.45 < 0.5$), B y C intactos. \\
-\textbf{F3-CP-10..12} & \textbf{\textcolor{accentgreen}{Aprobado}} & 735--783 ms & Controles HTML5 (\texttt{checkValidity() == false}) bloquearon $0$, $-5$ y $2.5$ sin enviar API. \\
-\textbf{F4-CP-01..02} & \textbf{\textcolor{accentgreen}{Aprobado}} & 732--800 ms & HTTP 201; saldos en Central ($15$ y $0$) y Sede A ($5$ y $20$) verificados en BD. \\
-\textbf{F4-CP-03} & \textbf{\textcolor{accentgreen}{Aprobado}} & 774 ms & Frontend mostró ``Stock insuficiente en central'' al solicitar $21 > 20$. \\
-\textbf{F4-CP-05} & \textbf{\textcolor{accentgreen}{Aprobado}} & 968 ms & Traslados sucesivos ($3+4$) acumularon $7$ en Sede B en vista \texttt{/inventario}. \\
-\textbf{F4-CP-04,06,07} & \textbf{\textcolor{accentgreen}{Aprobado}} & 775--813 ms & Controles HTML5 (\texttt{checkValidity() == false}) bloquearon $2.5$, $0$ y $-5$ antes del envío. \\
+\textbf{F1-CP-01} & \textbf{\textcolor{accentgreen}{Aprobado}} & 1243 ms & HTTP 201; ``Aceite de coco'' visible en tabla y stock 20 verificado en BD. \\
+\textbf{F1-CP-02} & \textbf{\textcolor{accentgreen}{Aprobado}} & 714 ms & HTTP 409; mensaje UI ``Registro duplicado'' por índice único. \\
+\textbf{F1-CP-03} & \textbf{\textcolor{accentgreen}{Aprobado}} & 798 ms & \textbf{Regresión DEF-01:} Índice \texttt{LOWER(TRIM(nombre))} rechazó ``aloe vera '' con HTTP 409. \\
+\textbf{F1-CP-04} & \textbf{\textcolor{accentgreen}{Aprobado}} & 831 ms & HTTP 201; Glicerina registrada exactamente en tope $50\,\text{kg}$. \\
+\textbf{F1-CP-05} & \textbf{\textcolor{accentred}{Fallido}} & 898 ms & \textbf{DEF-02:} Esperado HTTP $\ge 400$ (RN-04), recibido HTTP \textbf{201}; persistió $50.01\,\text{kg}$. \\
+\textbf{F1-CP-06} & \textbf{\textcolor{accentgreen}{Aprobado}} & 1095 ms & Rechazo aplicado en BD por \texttt{CHECK >= 0}, aunque API devolvió HTTP 500. \\
+\textbf{F2-CP-01} & \textbf{\textcolor{accentgreen}{Aprobado}} & 851 ms & HTTP 200; alerta ``Formula guardada'' capturada y 2 filas en \texttt{detalle\_formula}. \\
+\textbf{F2-CP-02} & \textbf{\textcolor{accentred}{Fallido}} & 852 ms & \textbf{DEF-03:} Esperado rechazo por fórmula vacía (RN-08), recibido HTTP \textbf{200}. \\
+\textbf{F2-CP-03} & \textbf{\textcolor{accentgreen}{Aprobado}} & 1237 ms & HTTP 409; restricción única impidió repetir ``Aloe vera'' en la misma fórmula. \\
+\textbf{F2-CP-04} & \textbf{\textcolor{accentgreen}{Aprobado}} & 838 ms & Validación frontend bloqueó cantidad $0$ sin enviar petición HTTP. \\
+\textbf{F3-CP-01} & \textbf{\textcolor{accentgreen}{Aprobado}} & 899 ms & HTTP 201; saldos finales exactos ($5,5,5$), Central $+10$, Dashboard sin alertas. \\
+\textbf{F3-CP-02} & \textbf{\textcolor{accentgreen}{Aprobado}} & 874 ms & HTTP 201; B y C agotados en $0$, Central $+25$ y alertas verificadas en Dashboard. \\
+\textbf{F3-CP-03} & \textbf{\textcolor{accentgreen}{Aprobado}} & 706 ms & HTTP 400 \texttt{P0001}; rollback total sin alterar A, B ni C. \\
+\textbf{F3-CP-04} & \textbf{\textcolor{accentgreen}{Aprobado}} & 690 ms & HTTP 400 \texttt{P0001}; rechazo por C sin descuento parcial en A ni B. \\
+\textbf{F3-CP-05} & \textbf{\textcolor{accentgreen}{Aprobado}} & 727 ms & HTTP 400 \texttt{P0001}; rechazo atómico por B ($4.95 < 5.0$). \\
+\textbf{F3-CP-06} & \textbf{\textcolor{accentgreen}{Aprobado}} & 817 ms & HTTP 201; A y C en $0$, Central $+1$, alertas confirmadas en Dashboard. \\
+\textbf{F3-CP-07} & \textbf{\textcolor{accentgreen}{Aprobado}} & 740 ms & HTTP 400 \texttt{P0001}; rechazo por A y B, insumo C intacto en $1.0$. \\
+\textbf{F3-CP-08} & \textbf{\textcolor{accentgreen}{Aprobado}} & 769 ms & HTTP 400 \texttt{P0001}; rechazo por A y C, insumo B intacto en $10.0$. \\
+\textbf{F3-CP-09} & \textbf{\textcolor{accentgreen}{Aprobado}} & 778 ms & HTTP 400 \texttt{P0001}; rechazo por A ($0.45 < 0.5$), B y C intactos. \\
+\textbf{F3-CP-10..12} & \textbf{\textcolor{accentgreen}{Aprobado}} & 710--828 ms & Controles HTML5 (\texttt{checkValidity() == false}) bloquearon $0$, $-5$ y $2.5$ sin enviar API. \\
+\textbf{F4-CP-01..02} & \textbf{\textcolor{accentgreen}{Aprobado}} & 675--718 ms & HTTP 201; saldos en Central ($15$ y $0$) y Sede A ($5$ y $20$) verificados en BD. \\
+\textbf{F4-CP-03} & \textbf{\textcolor{accentgreen}{Aprobado}} & 751 ms & Frontend mostró ``Stock insuficiente en central'' al solicitar $21 > 20$. \\
+\textbf{F4-CP-05} & \textbf{\textcolor{accentgreen}{Aprobado}} & 939 ms & Traslados sucesivos ($3+4$) acumularon $7$ en Sede B en vista \texttt{/inventario}. \\
+\textbf{F4-CP-04,06,07} & \textbf{\textcolor{accentgreen}{Aprobado}} & 668--782 ms & Controles HTML5 (\texttt{checkValidity() == false}) bloquearon $2.5$, $0$ y $-5$ antes del envío. \\
 \end{longtable}
 
 \subsection{Hallazgos Relevantes y Nuevos Defectos Descubiertos}
@@ -1167,7 +1165,7 @@ La ejecución automatizada estricta permitió revelar hallazgos críticos que ha
 
 \begin{enumerate}
     \item \textbf{Valor Descubridor de la Automatización Real:} Frente a la percepción manual de la Entrega 1 ($96.77\%$), la automatización estricta multicapa con Playwright alcanzó un \textbf{93.10\% de aprobación} ($27/29$), pero descubrió \textbf{dos defectos funcionales reales previamente omitidos} (\texttt{DEF-02} y \texttt{DEF-03}) y confirmó la regresión de \texttt{DEF-01}.
-    \item \textbf{Idoneidad de Playwright + PostgreSQL:} La selección de Playwright demostró ser altamente efectiva al completar todo el flujo E2E de 29 escenarios en navegador real en \textbf{28.5 segundos}, validando desde controles HTML5 hasta transacciones ACID en base de datos.
+    \item \textbf{Idoneidad de Playwright + PostgreSQL + POM:} La selección de Playwright estructurada bajo el patrón \textbf{Page Object Model} demostró ser altamente efectiva y mantenible, completando todo el flujo E2E de 29 escenarios en navegador real en \textbf{32.5 segundos}, validando desde controles HTML5 hasta transacciones ACID en base de datos.
     \item \textbf{Desafío del Aislamiento de Estado:} El principal reto técnico superado fue la interdependencia de inventarios entre casos del Arreglo Ortogonal $L_9$; la creación de una capa de \textit{sandboxing} transaccional (\texttt{resetBaseline()}) garantizó pruebas 100\% deterministas y reproducibles.
     \item \textbf{Recomendación de Cierre:} Corregir \texttt{DEF-02} (validación \texttt{<= 50}) y \texttt{DEF-03} (exigir \texttt{detalles.length > 0}) antes del paso a producción, ejecutando nuevamente \texttt{npx playwright test} como puerta de calidad automatizada.
 \end{enumerate}

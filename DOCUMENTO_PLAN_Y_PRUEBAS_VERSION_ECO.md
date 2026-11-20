@@ -140,12 +140,11 @@ Siguiendo la selección del equipo, las cuatro funcionalidades identificadas con
 - Inventarios negativos (Mitigación: validación con restricciones `CHECK` en PostgreSQL).
 
 ### 7.3. Estrategia de Automatización de Pruebas Funcionales (Actualización Entrega 2)
-Para la Entrega 2 se incorpora la estrategia formal de automatización E2E multicapa:
-1. **Validación Híbrida UI + Red HTTP + PostgreSQL:** Las pruebas interactúan en Google Chrome real contra React (`localhost:5173`), interceptan respuestas REST (`localhost:4000/api`) y verifican saldos ACID directamente en PostgreSQL 18.
-2. **Aislamiento Determinístico (`Test Data Sandboxing`):** Antes de cada prueba, `resetBaseline()` ejecuta `TRUNCATE ... RESTART IDENTITY CASCADE` y siembra los stocks exactos de ese caso en ~20 ms.
-3. **Ejecución Secuencial (`workers: 1`):** Previene condiciones de carrera sobre la base de datos compartida.
-4. **Sincronización Reactiva (`no sleep`):** Emplea auto-waiting nativo, `waitForResponse()` y `waitForEvent('dialog')`.
-5. **Evidencias Automáticas:** Capturas `.png`, trazas `trace.zip`, reporte HTML (`playwright-report`) y resultados JSON (`results.json`).
+Para la Entrega 2 se incorpora la estrategia formal de automatización E2E multicapa aplicando patrones de diseño estándar:
+1. **Patrón Page Object Model (POM):** Las páginas React se modelan en `tests-e2e/pages/` (`ProduccionPage.js`, `DistribucionPage.js`, `MateriasPrimasPage.js`, `ProductosPage.js`, `DashboardPage.js`), separando localizadores e interacciones de las aserciones de negocio.
+2. **Data-Driven Testing & Arrange-Act-Assert (AAA):** Los arreglos de datos combinatorios ($L_9$ y R1) parametrizan los flujos en bloques AAA claros.
+3. **Validación Híbrida UI + Red HTTP + PostgreSQL (`Test Data Builder`):** `resetBaseline()` ejecuta `TRUNCATE ... RESTART IDENTITY CASCADE` antes de cada caso en ~20 ms; luego se valida en Chrome real (`localhost:5173`), interceptación Express (`localhost:4000/api`) y saldos ACID en PostgreSQL 18.
+4. **Ejecución Secuencial (`workers: 1`) y Sincronización Reactiva (`no sleep`):** Emplea auto-waiting nativo, `waitForResponse()` y `waitForEvent('dialog')`, generando capturas `.png`, trazas `trace.zip`, reporte HTML y JSON.
 
 ---
 
@@ -317,14 +316,14 @@ Se seleccionó **Playwright Test (`@playwright/test` v1.50)** junto con **`pg` (
   - **F1:** 6/8 (`F1-CP-01` a `F1-CP-06`)
   - **F2:** 4/4 (`F2-CP-01` a `F2-CP-04`)
 - **Excluidos / Manuales (2 de 31):** `F1-CP-07` y `F1-CP-08` (prioridad **Media**, inspección visual de estilos en Dashboard y flujo destructivo con `window.confirm`).
-- **Implementación en el Repositorio:** Carpeta `tests-e2e/` (`playwright.config.js`, `helpers/db.js` y `tests/*.spec.js`).
+- **Implementación en el Repositorio:** Carpeta `tests-e2e/` (`playwright.config.js`, `pages/*.js` bajo Page Object Model, `helpers/db.js` y `tests/*.spec.js`).
 
 ---
 
 ## 12. Reporte de Ejecución Automatizada y Hallazgos Relevantes
 
 ### 12.1. Consolidado Real de Ejecución (`npx playwright test`)
-- **Duración Total:** `28.5 s` (`28,500 ms`) en Google Chrome real (`workers: 1`).
+- **Duración Total:** `32.5 s` (`32,493 ms`) en Google Chrome real (`workers: 1`).
 - **Total Ejecutados:** **29** | **Aprobados:** **27 (93.10%)** | **Fallidos:** **2 (6.90%)**.
 
 | Funcionalidad / Spec | Ejecutados | Aprobados | Fallidos | % Éxito |

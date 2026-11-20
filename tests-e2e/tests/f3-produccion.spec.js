@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { resetBaseline, getStocksSnapshot } from '../helpers/db.js';
+import { ProduccionPage } from '../pages/ProduccionPage.js';
+import { DashboardPage } from '../pages/DashboardPage.js';
 
 test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
   const aoCases = [
@@ -82,42 +84,40 @@ test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
 
   for (const tc of aoCases) {
     test(`${tc.id} - ${tc.title}`, async ({ page }) => {
+      // Arrange
       await resetBaseline({ ...tc.initial, invCentral: 0 });
-      await page.goto('/produccion');
+      const produccionPage = new ProduccionPage(page);
+      await produccionPage.goto();
 
-      await page.locator('form select').selectOption({ label: 'Champú vegano' });
-      await page.locator('form input[type="number"]').fill(tc.q);
-      await page.locator('form input[placeholder*="Lote"]').fill(`Lote ${tc.id}`);
+      // Act
+      const resp = await produccionPage.registrarProduccion('Champú vegano', tc.q, `Lote ${tc.id}`);
 
-      const respPromise = page.waitForResponse(
-        (res) => res.url().includes('/api/produccion') && res.request().method() === 'POST'
-      );
-      await page.getByRole('button', { name: 'Registrar Produccion' }).click();
-      const resp = await respPromise;
-
+      // Assert (HTTP + UI)
       if (tc.shouldSucceed) {
         expect(resp.status()).toBe(201);
-        await expect(page.locator('.error-msg')).toHaveCount(0);
-        await expect(page.locator('table tbody tr').first()).toContainText(`Lote ${tc.id}`);
+        await expect(produccionPage.errorBanner).toHaveCount(0);
+        await expect(produccionPage.firstRow).toContainText(`Lote ${tc.id}`);
       } else {
         expect(resp.status()).toBe(400);
-        await expect(page.locator('.error-msg')).toContainText('Stock insuficiente');
+        await expect(produccionPage.errorBanner).toContainText('Stock insuficiente');
       }
 
+      // Assert (Persistencia PostgreSQL)
       const snap = await getStocksSnapshot();
       expect(snap.materias['Aloe vera']).toBeCloseTo(tc.expected.A, 3);
       expect(snap.materias['Aceite de coco']).toBeCloseTo(tc.expected.B, 3);
       expect(snap.materias['Romero']).toBeCloseTo(tc.expected.C, 3);
       expect(snap.central['Champú vegano']).toBe(tc.expected.central);
 
+      // Assert (Alertas Dashboard)
       if (tc.shouldSucceed) {
-        await page.goto('/');
-        const alertBox = page.locator('.panel', { hasText: 'Alerta Materia Prima' });
+        const dashboard = new DashboardPage(page);
+        await dashboard.goto();
         if (tc.expectedAlerts.length === 0) {
-          await expect(alertBox).toContainText('Sin alertas');
+          await expect(dashboard.alertaMateriaPanel).toContainText('Sin alertas');
         } else {
           for (const ing of tc.expectedAlerts) {
-            await expect(alertBox).toContainText(ing);
+            await expect(dashboard.alertaMateriaPanel).toContainText(ing);
           }
         }
       }
@@ -133,21 +133,12 @@ test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
   for (const tc of invalidQuantityCases) {
     test(`${tc.id} - ${tc.title}`, async ({ page }) => {
       await resetBaseline({ stockA: 10, stockB: 7, stockC: 6, invCentral: 0 });
-      await page.goto('/produccion');
+      const produccionPage = new ProduccionPage(page);
+      await produccionPage.goto();
 
-      await page.locator('form select').selectOption({ label: 'Champú vegano' });
-      const qtyInput = page.locator('form input[type="number"]');
-      await qtyInput.fill(tc.q);
+      const { isHtml5Valid, apiCalled } = await produccionPage.intentarEnviarCantidadInvalida('Champú vegano', tc.q);
 
-      let apiCalled = false;
-      page.on('request', (req) => {
-        if (req.url().includes('/api/produccion') && req.method() === 'POST') apiCalled = true;
-      });
-
-      await page.getByRole('button', { name: 'Registrar Produccion' }).click();
-
-      const isValid = await qtyInput.evaluate((el) => el.checkValidity());
-      expect(isValid).toBe(false);
+      expect(isHtml5Valid).toBe(false);
       expect(apiCalled).toBe(false);
 
       const snap = await getStocksSnapshot();
