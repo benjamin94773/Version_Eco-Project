@@ -1,81 +1,143 @@
-# Guía y Guion de Presentación Grupal — Entrega Final (27 de noviembre de 2026)
+# Guion Completo de Presentación, Demo en Vivo y Tour de Código — Entrega Final
 
-**Proyecto:** Sistema de Gestión de Inventario y Producción *Version-Eco*  
-**Integrantes:** Harold Guerrero, Benjamin Ortiz, Samuel Rueda, Daniela Orobio  
-**Asignatura:** Construcción de Software y Pruebas — Pontificia Universidad Javeriana Cali  
-
----
-
-## 1. Estructura Recomendada de Diapositivas (9 Slides — ~12 minutos)
-
-| Slide | Tema | Responsable Sugerido | Contenido Clave |
-| :---: | :--- | :--- | :--- |
-| **1** | **Portada y Recordatorio del SUT** | Benjamin Ortiz | Nombre del sistema (*Version-Eco*), stack tecnológico (React 18 + Vite, Express 4, PostgreSQL 18) y las 4 funcionalidades complejas (F1–F4). |
-| **2** | **Actualización del Plan de Pruebas** | Benjamin Ortiz | Estrategia de Automatización E2E Multicapa (UI + Interceptación HTTP + Verificación en BD PostgreSQL) + *Test Data Sandboxing* (`resetBaseline()`). |
-| **3** | **Evaluación de Herramientas** | Samuel Rueda | Comparativa ponderada entre **Playwright (10/10)**, Cypress (8.5), Selenium (7.15), Katalon (6.75) y Postman (4.95). Socialización de criterios frente a React/HTML5/alertas nativas. |
-| **4** | **¿Por qué Playwright + `pg`?** | Samuel Rueda | Mismo lenguaje ESM que el proyecto, validación nativa `checkValidity()`, manejo de `window.alert`, arranque automático `webServer` y reporte HTML interactivo con trazas (`trace.zip`). |
-| **5** | **Selección de Casos (29 de 31)** | Harold Guerrero | Criterios ISTQB (Riesgo/ROI): **29 automatizados (93.55%)** cubriendo el 100% de prioridad Crítica y Alta (12 de F3, 7 de F4, 6 de F1, 4 de F2). Justificación de `F1-CP-07` y `F1-CP-08` como manuales (Media). |
-| **6** | **Demostración en Vivo** | Harold Guerrero | Ejecución en vivo con navegador visible (`npx playwright test --headed`) y apertura del reporte HTML (`npx playwright show-report`). |
-| **7** | **Resultados y Métricas Reales** | Daniela Orobio | **29 ejecutados en 28.5 s**: **27 aprobados (93.10%)** y **2 fallidos (6.90%)**. 100% de éxito en F3 (Taguchi $L_9$ atómico) y F4 (traslados). |
-| **8** | **Hallazgos y Nuevos Defectos** | Daniela Orobio | Explicación de **DEF-02 (`F1-CP-05`)**: acepta `50.01` kg violando RN-04; **DEF-03 (`F2-CP-02`)**: permite guardar fórmula vacía violando RN-08; regresión exitosa de **DEF-01** (`F1-CP-03`). |
-| **9** | **Desafíos Técnicos y Conclusiones** | Todo el equipo | Principales retos superados durante la automatización y cierre de aprendizajes para la clase. |
+**Archivo de diapositivas:** `Presentacion_Entrega2_Version_Eco.pptx` (9 diapositivas 16:9)  
+**Fecha de sustentación:** Viernes 27 de noviembre de 2026  
+**Duración estimada total:** 12 a 15 minutos (Exposición + Demo en vivo + Socialización)
 
 ---
 
-## 2. Guion para la Demostración en Vivo (Slide 6)
+## 1. Reparto de Roles y Turnos
 
-### Paso previo antes de empezar a exponer
-Asegúrate de tener PostgreSQL corriendo y abre una terminal en la carpeta `tests-e2e`:
+| Integrante | Diapositivas | Rol en la Exposición |
+| :--- | :--- | :--- |
+| **Benjamin Ortiz** | **Slides 1, 2 y 3** | Apertura, arquitectura del sistema (*Version-Eco*) y actualización del Plan de Pruebas con la Estrategia de Automatización. |
+| **Samuel Rueda** | **Slides 4 y 5** | Evaluación comparativa de herramientas del mercado y justificación técnica / socialización de por qué **Playwright + `pg`**. |
+| **Harold Guerrero** | **Slide 6 + Demo en Vivo + Código** | Criterios ISTQB de selección (29 de 31 casos), muestra del código en VS Code y ejecución en vivo de la suite en Chrome. |
+| **Daniela Orobio** | **Slides 7, 8 y 9** | Reporte real de resultados (27/29 = 93.10%), análisis de los hallazgos nuevos (**DEF-02**, **DEF-03**), desafíos y conclusiones. |
+
+---
+
+## 2. Guion Textual: Qué Debe Decir Cada Uno en Cada Diapositiva
+
+### Diapositiva 1 — Portada *(Benjamin Ortiz — 30 seg)*
+> *"Buenos días a todos y a la profesora. Hoy presentamos la segunda entrega y cierre del proyecto de pruebas sobre **Version-Eco**, nuestro sistema web de gestión de inventario y producción para cosmética vegana. En la primera entrega diseñamos 31 casos con técnicas formales de caja negra; en esta entrega implementamos la automatización real extremo a extremo usando Playwright conectado directamente a PostgreSQL."*
+
+### Diapositiva 2 — Arquitectura del Software Bajo Prueba *(Benjamin Ortiz — 1 min)*
+> *"Para contextualizar las decisiones técnicas de automatización, nuestro software tiene tres capas:*
+> *1. **Frontend SPA** en React 18 con Vite en el puerto 5173, que además usa validaciones nativas de HTML5 y diálogos nativos del navegador como `window.alert`.*
+> *2. **Backend REST API** en Node.js y Express en el puerto 4000, respondiendo códigos HTTP semánticos.*
+> *3. **Base de datos PostgreSQL 18**, donde viven procedimientos almacenados críticos en PL/pgSQL como `fn_registrar_produccion`, encargados de la atomicidad del consumo.*
+> *Las 4 funcionalidades complejas que seguimos evaluando son: F1 Materias Primas, F2 Fórmulas, F3 Producción y F4 Traslados entre sedes."*
+
+### Diapositiva 3 — Actualización del Plan Maestro de Pruebas *(Benjamin Ortiz — 1.5 min)*
+> *"En esta entrega actualizamos la sección 7.4 de nuestro Plan Maestro de Pruebas para incorporar la **Estrategia de Automatización Funcional** basada en cuatro pilares:*
+> *- **Validación multicapa real sin mocks:** cada prueba opera sobre Chrome real, intercepta la petición HTTP para verificar el código de estado devuelto por Express y al final consulta PostgreSQL directamente para confirmar que los saldos en base de datos cuadren al decimal.*
+> *- **Test Data Sandboxing:** como nuestras pruebas de Taguchi $L_9$ consumen insumos reales, antes de cada test ejecutamos `resetBaseline()`, que limpia e inyecta en ~20 milisegundos las precondiciones exactas.*
+> *- **Ejecución secuencial (`workers: 1`):** corremos un worker a la vez para evitar condiciones de carrera sobre la base de datos local.*
+> *- **Sincronización reactiva sin `sleep()` fijos:** usamos auto-waiting y captura automática de capturas PNG y trazas `trace.zip` cuando ocurre algún fallo."*
+
+---
+
+### Diapositiva 4 — Evaluación Comparativa de Herramientas *(Samuel Rueda — 1.5 min)*
+> *"Para elegir la herramienta evaluamos 5 opciones representativas del mercado bajo 6 criterios ponderados acorde al stack de Version-Eco: compatibilidad con JavaScript/React (20%), soporte a validaciones HTML5 y alertas nativas (20%), capacidad de integrar UI + API + Base de Datos en un solo flujo (20%), reportería nativa (15%), estabilidad con auto-wait (15%) y licenciamiento Open Source (10%).*
+> *Como ven en la tabla y el gráfico de barras, **Playwright** obtuvo 10.0 sobre 10, seguido por Cypress con 8.50, Selenium con 7.15, Katalon Studio con 6.75 y Postman con 4.95."*
+
+### Diapositiva 5 — Justificación y Socialización de Playwright + `pg` *(Samuel Rueda — 1.5 min)*
+> *"Queremos compartir con los compañeros por qué elegimos Playwright y no otras herramientas muy populares en clase:*
+> *- Frente a **Postman/Newman**: Postman es excelente para API REST, pero no abre un navegador real; no habría podido detectar si los formularios de React bloquean cantidades decimales como `Q=2.5` ni comprobar si el Dashboard renderiza las tarjetas de alerta roja.*
+> *- Frente a **Selenium WebDriver**: Selenium exige gestionar drivers y escribir esperas explícitas propensas a fallos intermitentes, mientras Playwright maneja auto-waiting nativo y trae reportero HTML integrado.*
+> *- Frente a **Cypress**: Cypress presenta limitaciones conocidas con diálogos nativos bloqueantes como `window.alert()`, que nuestro módulo de Fórmulas sí utiliza al guardar, y consume más memoria en Windows.*
+> *- Frente a **Katalon**: Katalon utiliza Groovy fuera de nuestro stack JavaScript y restringe reportes avanzados a licencia comercial.*
+> *Además, al estar en Node.js ESM igual que el proyecto, conectamos el driver oficial `pg` directamente dentro de la carpeta `tests-e2e/` y con `webServer` Playwright levanta Backend y Frontend automáticamente."*
+
+---
+
+### Diapositiva 6 — Selección de Casos Automatizados *(Harold Guerrero — 1 min)*
+> *"Siguiendo el principio ISTQB de que no se automatiza el 100% sin criterio, aplicamos una matriz de selección por Riesgo y Retorno de Inversión sobre los 31 casos de la Entrega 1:*
+> *- **Seleccionamos 29 casos (93.55%)**, cubriendo el 100% de los casos de prioridad **Crítica y Alta**: los 12 de Producción (donde preparar manualmente los stocks del Arreglo Ortogonal $L_9$ tomaba muchísimo tiempo), los 7 de Traslados, los 4 de Fórmulas y 6 de Materias Primas (incluyendo la prueba de regresión del defecto DEF-01).*
+> *- **Dejamos 2 casos manuales de prioridad Media:** `F1-CP-07` porque evalúa apariencia visual del semáforo en cero y `F1-CP-08` porque exige confirmación humana destructiva con historial de consumo.*
+> *Ahora vamos a ver rápidamente cómo implementamos esto en código y ejecutarlo en vivo."*
+
+---
+
+## 3. Guía Exacta para el que Ejecuta la Demo y el Tour de Código *(Harold Guerrero — 3 a 4 min)*
+
+### Preparación previa (antes de subir a exponer)
+1. Abrir **VS Code** en la carpeta del proyecto con estas **4 pestañas abiertas** en orden:
+   - Pestaña 1: `tests-e2e/playwright.config.js`
+   - Pestaña 2: `tests-e2e/helpers/db.js`
+   - Pestaña 3: `tests-e2e/tests/f3-produccion.spec.js`
+   - Pestaña 4: `tests-e2e/tests/f2-formulas.spec.js`
+2. Abrir la **Terminal integrada** en VS Code ubicada dentro de `tests-e2e`:
+   ```powershell
+   cd tests-e2e
+   ```
+3. *(Tip pro)* Deja corriendo `iniciar_local` desde antes (o deja que `webServer` lo arranque), así la demo visual en Chrome arranca en menos de 2 segundos.
+
+---
+
+### Parte A: Tour de Código en VS Code (Mostrar y Comentar — 1.5 min)
+
+#### 1. Mostrar `tests-e2e/playwright.config.js` (Líneas 10 a 47)
+*Qué señalar con el mouse:* `workers: 1`, `channel: 'chrome'`, `screenshot: 'only-on-failure'`, y `webServer`.
+> **Qué decir:** *"Aquí en `playwright.config.js` configuramos tres cosas clave: `workers: 1` para correr en serie y no corromper la base de datos entre tests; `screenshot: 'only-on-failure'` y `trace: 'retain-on-failure'` para guardar evidencias automáticas solo cuando un caso falla; y `webServer`, que levanta automáticamente Backend y Frontend si no están encendidos."*
+
+#### 2. Mostrar `tests-e2e/helpers/db.js` (Líneas 20 a 60)
+*Qué señalar:* La función `resetBaseline(...)` y el `TRUNCATE TABLE ... RESTART IDENTITY CASCADE`.
+> **Qué decir:** *"Este archivo resuelve nuestro mayor reto de la Entrega 1: en el Arreglo Ortogonal $L_9$ cada caso necesita stocks iniciales distintos (por ejemplo `A=17.5, B=5, C=2.5`). En vez de cambiarlos a mano, `resetBaseline()` limpia e inserta en PostgreSQL los datos exactos antes de cada prueba en 20 milisegundos."*
+
+#### 3. Mostrar `tests-e2e/tests/f3-produccion.spec.js` (Líneas 83 a 125 y 133 a 155)
+*Qué señalar:* El bucle `for (const tc of aoCases)`, `waitForResponse`, `getStocksSnapshot()` y `qtyInput.evaluate(el => el.checkValidity())`.
+> **Qué decir:** *"Miren qué limpio queda el Arreglo Ortogonal $L_9$: parametrizamos las 9 corridas en un arreglo y un mismo bloque las ejecuta en Chrome, intercepta el `POST /api/produccion` para confirmar si fue 201 o 400 de rollback, verifica en PostgreSQL que ningún insumo tuvo descuento parcial y luego va al Dashboard a verificar las alertas rojas. Y abajo en `F3-CP-10` a `12`, evaluamos directamente `checkValidity()` en el DOM para probar que el formulario bloquea `0`, `-5` y `2.5`."*
+
+#### 4. Mostrar `tests-e2e/tests/f2-formulas.spec.js` (Líneas 22 a 68)
+*Qué señalar:* `Promise.all([respPromise, dialogPromise])` en `F2-CP-01` y la aserción de `F2-CP-02`.
+> **Qué decir:** *"Aquí resolvimos las alertas nativas de JavaScript (`window.alert`) esperando en paralelo la respuesta HTTP y el evento `dialog`. Y en `F2-CP-02` afirmamos que al intentar guardar una fórmula vacía sin ingredientes, la API debe responder `>= 400` según la regla de negocio RN-08... y ya verán en vivo qué pasa."*
+
+---
+
+### Parte B: Ejecución en Vivo (Hacer y Narrar — 2 min)
+
+#### Paso 1: Demo visual en navegador real (solo F3 para que sea rápido y visual)
+Escribir en la terminal de `tests-e2e`:
 ```powershell
-cd tests-e2e
+npx playwright test tests/f3-produccion.spec.js --headed
 ```
-*(No hace falta prender `backend` ni `frontend` aparte si están apagados, porque `playwright.config.js` los levanta automáticamente con `webServer`, aunque tenerlos encendidos con `iniciar_local` hace que la demo empiece instantáneamente).*
+*Qué está pasando en pantalla:* Se abre la ventana de Chrome y se ve a altísima velocidad cómo selecciona `Champú vegano`, escribe `10`, `25`, `1`, registra lotes, aparecen errores rojos de `Stock insuficiente` en los casos negativos y salta al Dashboard a validar alertas.
+> **Qué decir mientras Chrome corre:** *"En este momento Playwright está controlando Chrome de verdad sin intervención humana. Pueden ver cómo ejecuta las 9 combinaciones de Taguchi $L_9$: cuando falta un insumo captura la alerta en pantalla y verifica que el stock en base de datos no cambió; cuando pasa, va al Dashboard y comprueba las alertas rojas. Las 12 pruebas de producción terminan en menos de 12 segundos con 100% de aprobación."*
 
-### Comandos durante la demostración en vivo
-1. **Ejecutar una demostración visual rápida de F3 (Producción Atómica Taguchi $L_9$) con navegador abierto (`--headed`):**
-   ```powershell
-   npx playwright test tests/f3-produccion.spec.js --headed
-   ```
-   *Qué destacar mientras el público mira:* *"Observen cómo antes de cada caso se inyectan los saldos exactos en PostgreSQL (`resetBaseline`), Chrome llena el formulario automáticamente, valida en Dashboard las alertas rojas cuando $B$ y $C$ llegan a cero (`F3-CP-02`), y confirma el rollback atómico cuando falta stock."*
+#### Paso 2: Ejecutar la suite completa (los 29 casos) en consola
+```powershell
+npm test
+```
+*Qué ocurre:* En **~28 segundos** termina e imprime en consola: `27 passed` en verde y `2 failed` en rojo (`F1-CP-05` y `F2-CP-02`).
+> **Qué decir al terminar:** *"Listo: 29 casos ejecutados en ~28 segundos. 27 pasaron en verde y 2 fallaron en rojo (`F1-CP-05` y `F2-CP-02`). Vamos a abrir el reporte visual oficial para ver por qué fallaron."*
 
-2. **Ejecutar la suite completa (los 29 casos):**
-   ```powershell
-   npm test
-   ```
-   *Resultado esperado en ~28.5 segundos:* `27 passed, 2 failed` (`F1-CP-05` y `F2-CP-02`).
-
-3. **Abrir el Reporte HTML interactivo para mostrar las evidencias:**
-   ```powershell
-   npm run report
-   ```
-   *Qué mostrar en el navegador:*
-   * Filtrar por **Failed (2)**: hacer clic en `F1-CP-05` y `F2-CP-02`.
-   * Mostrar la aserción exacta fallida (`Expected >= 400, Received 201` y `Received 200`), la **captura de pantalla automática** del formulario en ese instante y la **traza interactiva** (`trace.zip`) con línea de tiempo y peticiones de red.
+#### Paso 3: Abrir el Reporte HTML interactivo
+```powershell
+npm run report
+```
+*(Se abre el navegador con el reporte de Playwright. Hacer clic en la pestaña/filtro **"Failed (2)"** y abrir uno de los fallidos para mostrar la captura de pantalla).*
+> **Qué decir:** *"Este es el reporte HTML oficial que genera Playwright. Aquí podemos filtrar los 2 fallos, ver el error exacto (`Expected >= 400, Received 201` en F1-CP-05), revisar la captura de pantalla tomada automáticamente en el momento del fallo y hasta la traza paso a paso. Le doy paso a Daniela para explicar estos resultados."*
 
 ---
 
-## 3. Principales Desafíos Encontrados (Slide 9)
+## 4. Guion de Cierre: Resultados, Hallazgos y Desafíos *(Daniela Orobio — 3 min)*
 
-1. **Aislamiento de Estado y Dependencias entre Casos ($L_9$ y F4):**
-   * *Problema:* Las pruebas de producción consumen inventario real y las de traslado dependen del stock central generado previamente. Si se ejecutan en paralelo o sin limpieza, los saldos se contaminan y los casos fallan de forma intermitente (*flaky*).
-   * *Solución:* Ejecución secuencial (`workers: 1`) combinada con un *Test Data Builder* en PostgreSQL (`helpers/db.js`) que ejecuta `TRUNCATE ... RESTART IDENTITY CASCADE` y restablece el escenario exacto en ~20 ms antes de cada caso.
+### Diapositiva 7 — Reporte Real de Ejecución *(Daniela Orobio)*
+> *"Consolidando la ejecución automatizada que acaban de ver: ejecutamos los **29 casos seleccionados en 28.5 segundos**, obteniendo **27 casos aprobados (93.10%)** y **2 casos fallidos (6.90%)**.*
+> *Desglosado por módulo: **Producción (F3) logró 100%** con 12 de 12 aprobados, y **Distribución (F4) logró 100%** con 7 de 7 aprobados, lo que confirma que la lógica transaccional en PostgreSQL es sumamente robusta. Los dos fallos ocurrieron en Materias Primas (F1) y Fórmulas (F2)."*
 
-2. **Manejo de Validaciones Nativas HTML5 (`checkValidity`) vs Peticiones API:**
-   * *Problema:* En `F3-CP-10/11/12` y `F4-CP-04/06/07`, los inputs `<input type="number" min="1">` bloquean el envío antes de disparar ninguna petición HTTP o mensaje `.error-msg` en el DOM.
-   * *Solución:* Evaluar directamente el estado de restricción del navegador con `qtyInput.evaluate(el => el.checkValidity())` combinado con un listener de red confirmando que nunca se envió la petición `POST`.
+### Diapositiva 8 — Hallazgos Relevantes y Nuevos Defectos *(Daniela Orobio)*
+> *"Lo más valioso de pasar de pruebas manuales a pruebas automatizadas estrictas fue descubrir hallazgos reales que en la Entrega 1 se habían pasado por alto:*
+> *1. **DEF-02 (Nuevo) en `F1-CP-05`:** Según la regla RN-04, el stock máximo de una materia prima es 50 unidades. Al enviar automatizadamente `50.01 kg` para Glicerina, ni el formulario ni el backend lo bloquearon: Express respondió `201 Created` y lo guardó en la base de datos.*
+> *2. **DEF-03 (Nuevo) en `F2-CP-02`:** Según RN-08, toda fórmula debe tener al menos un ingrediente. Sin embargo, al dar clic en 'Guardar Fórmula' sin materias primas, el endpoint respondió `200 OK` y el frontend mostró la alerta `'Formula guardada'`, borrando además la receta previa.*
+> *3. **Regresión confirmada de DEF-01 en `F1-CP-03`:** El defecto que reportamos en la Entrega 1 sobre `"aloe vera "` con espacios y minúsculas ya fue rechazado con HTTP 409 gracias al índice único `LOWER(TRIM(nombre))` en la base de datos.*
+> *4. **Observación en `F1-CP-06` (`-1 kg`):** Aunque PostgreSQL sí protege el sistema impidiendo guardar negativos mediante su restricción `CHECK`, el backend retorna un error genérico `500` en lugar de una validación controlada `400 Bad Request`."*
 
-3. **Sincronización con Diálogos Bloqueantes Nativos (`window.alert`):**
-   * *Problema:* Al guardar una fórmula en React (`ProductosPage.jsx`), el diálogo `alert('Formula guardada')` aparece de forma asíncrona tras la respuesta `PUT` y bloquea el hilo si no se escucha explícitamente; en nuestra primera ejecución causó una condición de carrera en `F2-CP-01`.
-   * *Solución:* Sincronización paralela determinística mediante `Promise.all([page.waitForResponse(...), page.waitForEvent('dialog')])`.
-
-4. **Diferencias entre Pruebas Manuales (Entrega 1) y Automatizadas (Entrega 2):**
-   * *Hallazgo:* La automatización reveló que el código real del backend no implementaba el tope de 50 kg (`RN-04` -> **DEF-02**) ni el bloqueo de fórmulas vacías (`RN-08` -> **DEF-03**), y que el manejo de negativos (`-1`) devolvía `HTTP 500` por excepción SQL sin captura controlada en Express. Esto demostró ante el equipo el valor real de las aserciones automatizadas estrictas.
-
----
-
-## 4. Puntos de Socialización con los Compañeros del Curso
-
-* **¿Por qué recomendamos Playwright sobre Cypress o Selenium para proyectos React + Vite + PostgreSQL?**
-  * *Frente a Selenium:* Evita configurar WebDrivers externos y elimina esperas manuales (`Thread.sleep`) gracias al *auto-waiting*.
-  * *Frente a Cypress:* Permite evaluar validaciones HTML5 nativas, controlar alertas bloqueantes sin romper el flujo, ejecutar en múltiples pestañas/contextos y levantar el servidor Backend+Frontend desde su misma configuración (`webServer`).
-  * *Frente a Postman:* Postman solo verifica la API REST, pero no detecta si el formulario React bloquea un decimal (`Q=2.5`) o si las tarjetas rojas del Dashboard realmente se renderizan. Con Playwright validamos **Frontend + API + PostgreSQL en una sola ejecución**.
+### Diapositiva 9 — Desafíos Superados y Conclusiones *(Daniela Orobio)*
+> *"Para finalizar, resumimos los tres grandes desafíos técnicos que superamos en esta entrega:*
+> *1. **Aislamiento de inventario** para el Arreglo Ortogonal mediante `resetBaseline()` en PostgreSQL.*
+> *2. **Validaciones HTML5**, comprobando `checkValidity()` cuando el navegador frena la petición antes de llegar a la API.*
+> *3. **Condiciones de carrera con `window.alert()`**, resueltas sincronizando respuesta HTTP y diálogo en paralelo.*
+> *Como conclusión, la automatización con Playwright nos permitió ejecutar en menos de medio minuto 29 escenarios reales multicapa, certificando la solidez del núcleo transaccional de Version-Eco y entregando al equipo de desarrollo dos defectos concretos y reproducibles antes de salir a producción. Muchas gracias."*
