@@ -39,6 +39,7 @@ export class DistribucionPage extends BasePage {
 
     await this.click(this.distribuirBtn);
     const isHtml5Valid = await this.cantidadInput.evaluate((el) => el.checkValidity());
-    return { isHtml5Valid, apiCalled };
+    const validationMessage = await this.cantidadInput.evaluate((el) => el.validationMessage);
+    return { isHtml5Valid, validationMessage, apiCalled };
   }
 }

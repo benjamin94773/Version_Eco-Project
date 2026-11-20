@@ -27,6 +27,7 @@ test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
       initial: { stockA: 5.5, stockB: 0.15, stockC: 0.05 },
       q: '1',
       shouldSucceed: false,
+      expectedError: 'Stock insuficiente para la materia prima "Aceite de coco"',
       expected: { A: 5.5, B: 0.15, C: 0.05, central: 0 }
     },
     {
@@ -35,6 +36,7 @@ test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
       initial: { stockA: 5, stockB: 2, stockC: 0.95 },
       q: '10',
       shouldSucceed: false,
+      expectedError: 'Stock insuficiente para la materia prima "Romero"',
       expected: { A: 5, B: 2, C: 0.95, central: 0 }
     },
     {
@@ -43,6 +45,7 @@ test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
       initial: { stockA: 12.5, stockB: 4.95, stockC: 7.5 },
       q: '25',
       shouldSucceed: false,
+      expectedError: 'Stock insuficiente para la materia prima "Aceite de coco"',
       expected: { A: 12.5, B: 4.95, C: 7.5, central: 0 }
     },
     {
@@ -60,6 +63,7 @@ test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
       initial: { stockA: 4.95, stockB: 1.95, stockC: 1 },
       q: '10',
       shouldSucceed: false,
+      expectedError: 'Stock insuficiente para la materia prima "Aloe vera"',
       expected: { A: 4.95, B: 1.95, C: 1, central: 0 }
     },
     {
@@ -68,6 +72,7 @@ test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
       initial: { stockA: 12.45, stockB: 10, stockC: 2.45 },
       q: '25',
       shouldSucceed: false,
+      expectedError: 'Stock insuficiente para la materia prima "Aloe vera"',
       expected: { A: 12.45, B: 10, C: 2.45, central: 0 }
     },
     {
@@ -76,6 +81,7 @@ test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
       initial: { stockA: 0.45, stockB: 0.2, stockC: 5.1 },
       q: '1',
       shouldSucceed: false,
+      expectedError: 'Stock insuficiente para la materia prima "Aloe vera"',
       expected: { A: 0.45, B: 0.2, C: 5.1, central: 0 }
     }
   ];
@@ -93,7 +99,7 @@ test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
         await expect(produccionPage.firstRow).toContainText(`Lote ${tc.id}`);
       } else {
         expect(resp.status()).toBe(400);
-        await expect(produccionPage.errorBanner).toContainText('Stock insuficiente');
+        await expect(produccionPage.errorBanner).toContainText(tc.expectedError);
       }
 
       const snap = await getStocksSnapshot();
@@ -126,9 +132,10 @@ test.describe('F3 - Registro de Produccion Centralizada (AO L9 + TD)', () => {
       await resetBaseline({ stockA: 10, stockB: 7, stockC: 6, invCentral: 0 });
       await produccionPage.goto();
 
-      const { isHtml5Valid, apiCalled } = await produccionPage.intentarEnviarCantidadInvalida('Champú vegano', tc.q);
+      const { isHtml5Valid, validationMessage, apiCalled } = await produccionPage.intentarEnviarCantidadInvalida('Champú vegano', tc.q);
 
       expect(isHtml5Valid).toBe(false);
+      expect(validationMessage.length).toBeGreaterThan(0);
       expect(apiCalled).toBe(false);
 
       const snap = await getStocksSnapshot();

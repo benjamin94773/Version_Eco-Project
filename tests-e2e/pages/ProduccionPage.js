@@ -38,6 +38,7 @@ export class ProduccionPage extends BasePage {
 
     await this.click(this.submitBtn);
     const isHtml5Valid = await this.cantidadInput.evaluate((el) => el.checkValidity());
-    return { isHtml5Valid, apiCalled };
+    const validationMessage = await this.cantidadInput.evaluate((el) => el.validationMessage);
+    return { isHtml5Valid, validationMessage, apiCalled };
   }
 }

@@ -20,6 +20,7 @@ test.describe('F1 - Gestion de Materia Prima (TD + VL)', () => {
 
     expect(resp).not.toBeNull();
     expect(resp.status()).toBe(201);
+    await expect(mpPage.errorBanner).toHaveCount(0);
     await expect(mpPage.tableBody).toContainText('Aceite de coco');
 
     const snap = await getStocksSnapshot();
@@ -59,6 +60,7 @@ test.describe('F1 - Gestion de Materia Prima (TD + VL)', () => {
 
     expect(resp).not.toBeNull();
     expect(resp.status()).toBe(201);
+    await expect(mpPage.errorBanner).toHaveCount(0);
     await expect(mpPage.tableBody).toContainText('Glicerina');
 
     const snap = await getStocksSnapshot();
@@ -89,6 +91,7 @@ test.describe('F1 - Gestion de Materia Prima (TD + VL)', () => {
     if (resp !== null) {
       expect(resp.status()).toBeGreaterThanOrEqual(400);
     }
+    await expect(mpPage.errorBanner).toBeVisible();
     const snap = await getStocksSnapshot();
     expect(snap.materias['Glicerina']).toBeUndefined();
   });

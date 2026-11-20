@@ -58,7 +58,7 @@ test.describe('F4 - Traslado de Productos a Sedes (TD + VL)', () => {
 
   for (const tc of invalidDistCases) {
     test(`${tc.id} - ${tc.title}`, async ({ distribucionPage }) => {
-      const { isHtml5Valid, apiCalled } = await distribucionPage.intentarDistribuirInvalido(
+      const { isHtml5Valid, validationMessage, apiCalled } = await distribucionPage.intentarDistribuirInvalido(
         'Champú vegano',
         'Sede A',
         tc.q,
@@ -66,6 +66,7 @@ test.describe('F4 - Traslado de Productos a Sedes (TD + VL)', () => {
       );
 
       expect(isHtml5Valid).toBe(false);
+      expect(validationMessage.length).toBeGreaterThan(0);
       expect(apiCalled).toBe(false);
 
       const snap = await getStocksSnapshot();
